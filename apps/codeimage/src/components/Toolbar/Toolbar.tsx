@@ -12,7 +12,7 @@ import {createMemo, Show} from 'solid-js';
 import {CodeImageLogoV2} from '../Icons/CodeImageLogoV2';
 import {CollectionIcon} from '../Icons/Collection';
 import {sidebarLogo} from '../Scaffold/Sidebar/Sidebar.css';
-import {UserBadge} from '../UserBadge/UserBadge';
+import {LocalProjectButtons} from './LocalProjectMenu';
 import {ExportButton} from './ExportButton';
 import {ShareButton} from './ShareButton';
 import * as styles from './Toolbar.css';
@@ -79,10 +79,9 @@ export function Toolbar(props: VoidProps<ToolbarProps>) {
           <HStack marginLeft={'auto'} spacing={'2'}>
             <Show when={modality === 'full'} keyed={false}>
               <ShareButton showLabel={false} />
-
+              <LocalProjectButtons />
               <ExportButton canvasRef={props.canvasRef} />
             </Show>
-            <UserBadge />
           </HStack>
         </Box>
       </div>
