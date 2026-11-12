@@ -82,7 +82,7 @@ const config: UserConfigExport = defineConfig(({mode}) => ({
   build: {
     sourcemap: false,
     minify: true,
-    polyfillModulePreload: false,
+    modulePreload: {polyfill: false},
     polyfillDynamicImport: false,
     cssCodeSplit: true,
     reportCompressedSize: true,
