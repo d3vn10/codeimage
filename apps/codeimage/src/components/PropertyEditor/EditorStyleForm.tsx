@@ -38,7 +38,8 @@ const languages: readonly LanguageDefinition[] = [...SUPPORTED_LANGUAGES].sort(
 
 export const EditorStyleForm: ParentComponent = () => {
   const {themeArray} = getThemeStore();
-  const [selectedManualCategory, setSelectedManualCategory] = createSignal('function');
+  const [selectedManualCategory, setSelectedManualCategory] =
+    createSignal('function');
   const {lineNumbers: lineNumbersConfig} = appEnvironment;
   const [t] = useI18n<AppLocaleEntries>();
   const {
@@ -204,7 +205,9 @@ export const EditorStyleForm: ParentComponent = () => {
                   label={'Syntax category'}
                 >
                   <TwoColumnPanelRow>
-                    <span>No syntax categories are available for this theme.</span>
+                    <span>
+                      No syntax categories are available for this theme.
+                    </span>
                   </TwoColumnPanelRow>
                 </PanelRow>
               }
@@ -223,7 +226,8 @@ export const EditorStyleForm: ParentComponent = () => {
                         {...manualHighlightCategoryOptions.props()}
                         {...manualHighlightCategoryOptions.controlled(
                           () => activeManualCategory(),
-                          category => setSelectedManualCategory(category as string),
+                          category =>
+                            setSelectedManualCategory(category as string),
                         )}
                         options={manualHighlightCategoryOptions.options()}
                         aria-label={'Syntax category'}
@@ -245,7 +249,9 @@ export const EditorStyleForm: ParentComponent = () => {
                       theme={'secondary'}
                       block
                       disabled={!hasSelection() || !activeManualCategory()}
-                      onClick={() => applySyntaxCategoryToSelection(activeManualCategory())}
+                      onClick={() =>
+                        applySyntaxCategoryToSelection(activeManualCategory())
+                      }
                     >
                       Apply category
                     </Button>
