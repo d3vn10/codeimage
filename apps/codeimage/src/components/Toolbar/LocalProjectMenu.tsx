@@ -1,6 +1,6 @@
 import {getEditorStore} from '@codeimage/store/editor';
 import type {ProjectEditorPersistedState} from '@codeimage/store/editor/model';
-import {DropdownMenuItem} from '@codeui/kit';
+import {Button} from '@codeui/kit';
 import {appEnvironment} from '@core/configuration';
 
 function isProjectFile(value: unknown): value is ProjectEditorPersistedState {
@@ -16,7 +16,7 @@ function isProjectFile(value: unknown): value is ProjectEditorPersistedState {
   );
 }
 
-export function LocalProjectMenuItems() {
+export function LocalProjectButtons() {
   let fileInput!: HTMLInputElement;
 
   function saveProject() {
@@ -66,10 +66,12 @@ export function LocalProjectMenuItems() {
 
   return (
     <>
-      <DropdownMenuItem onClick={saveProject}>Save project</DropdownMenuItem>
-      <DropdownMenuItem onClick={() => fileInput.click()}>
+      <Button size={'sm'} theme={'secondary'} onClick={saveProject}>
+        Save project
+      </Button>
+      <Button size={'sm'} theme={'secondary'} onClick={() => fileInput.click()}>
         Open project
-      </DropdownMenuItem>
+      </Button>
       <input
         ref={fileInput}
         type="file"
