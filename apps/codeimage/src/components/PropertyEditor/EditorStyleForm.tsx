@@ -7,14 +7,14 @@ import {getRootEditorStore} from '@codeimage/store/editor';
 import {getActiveEditorStore} from '@codeimage/store/editor/activeEditor';
 import {dispatchUpdateTheme} from '@codeimage/store/effects/onThemeChange';
 import {getThemeStore} from '@codeimage/store/theme/theme.store';
-import {Button, createSelectOptions, NumberField, Select} from '@codeui/kit';
+import {Button, createSelectOptions, fieldStyles, NumberField, Select} from '@codeui/kit';
 import {appEnvironment} from '@core/configuration';
 import {getUmami} from '@core/constants/umami';
 import {DynamicSizedContainer} from '@ui/DynamicSizedContainer/DynamicSizedContainer';
 import {SegmentedField} from '@ui/SegmentedField/SegmentedField';
 import {SkeletonLine} from '@ui/Skeleton/Skeleton';
 import type {ParentComponent} from 'solid-js';
-import {createMemo, createSignal, Show} from 'solid-js';
+import {createEffect, createMemo, createSignal, Show} from 'solid-js';
 import type {AppLocaleEntries} from '../../i18n';
 import {FontPicker} from './controls/FontPicker/FontPicker';
 import {PanelDivider} from './PanelDivider';
@@ -158,6 +158,14 @@ export const EditorStyleForm: ParentComponent = () => {
       })),
     {key: 'label', valueKey: 'value'},
   );
+
+  const [lineHeightInput, setLineHeightInput] = createSignal(
+    String(state.options.lineHeight ?? 1.5),
+  );
+
+  createEffect(() => {
+    setLineHeightInput(String(state.options.lineHeight ?? 1.5));
+  });
 
   const activeManualCategory = createMemo(() => selectedManualCategory());
   const isPlainText = createMemo(() => editor()?.languageId === 'plain-text');
@@ -508,15 +516,39 @@ export const EditorStyleForm: ParentComponent = () => {
 
             <PanelRow for={'frameLineHeightField'} label={'Line spacing'}>
               <TwoColumnPanelRow>
-                <NumberField
-                  size={'xs'}
+                <input
                   id={'frameLineHeightField'}
+                  aria-label={'Line spacing'}
+                  class={fieldStyles.baseFieldVariants({size: 'xs'})}
+                  type={'number'}
+                  lang={'en'}
+                  inputMode={'decimal'}
                   min={1}
                   max={1.5}
                   step={0.1}
-                  precision={1}
-                  value={state.options.lineHeight ?? 1.5}
-                  onChange={value => setLineHeight(value)}
+                  value={lineHeightInput()}
+                  style={{'padding-left': '12px', 'padding-right': '12px'}}
+                  onInput={event => {
+                    const rawValue = event.currentTarget.value;
+                    setLineHeightInput(rawValue);
+                    if (!rawValue || rawValue.endsWith('.')) return;
+                    const value = Number(rawValue);
+                    if (Number.isFinite(value) && value >= 1 && value <= 1.5) {
+                      setLineHeight(value);
+                    }
+                  }}
+                  onBlur={event => {
+                    const rawValue = event.currentTarget.value;
+                    const parsedValue = Number(rawValue);
+                    const value =
+                      rawValue && Number.isFinite(parsedValue)
+                        ? Math.round(
+                            Math.min(1.5, Math.max(1, parsedValue)) * 10,
+                          ) / 10
+                        : (state.options.lineHeight ?? 1.5);
+                    setLineHeight(value);
+                    setLineHeightInput(value.toFixed(1));
+                  }}
                 />
               </TwoColumnPanelRow>
             </PanelRow>
