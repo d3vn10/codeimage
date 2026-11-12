@@ -113,6 +113,7 @@ export function createEditorsStore() {
         .slice(0, MAX_TABS)
         .map(editor => ({
           tabName: editor.tabName,
+          tabIcon: editor.tabIcon,
           languageId: editor.languageId,
           id: editor.id,
           code: editor.code,
@@ -126,7 +127,7 @@ export function createEditorsStore() {
           return {
             code: editor.code,
             languageId: editor.languageId,
-            tab: {tabName: editor.tabName},
+            tab: {tabName: editor.tabName, tabIcon: editor.tabIcon},
             id: editor.id,
             lineNumberStart: editor.lineNumberStart,
             coloredRanges: editor.coloredRanges ?? [],
@@ -151,6 +152,7 @@ export function createEditorsStore() {
           languageId: editor.languageId,
           code: editor.code,
           tabName: editor.tab.tabName ?? '',
+          tabIcon: editor.tab.tabIcon,
           id: editor.id,
           lineNumberStart: editor.lineNumberStart ?? 1,
           coloredRanges: editor.coloredRanges ?? [],
@@ -223,23 +225,17 @@ export function createEditorsStore() {
     store.dispatch(editorUpdateCommand, void 0);
   };
 
-  const setTabName = (id: string, name: string, updateLanguage: boolean) => {
-    const index = store.get.editors.findIndex(tab => isActive(tab.id));
+  const setTabName = (id: string, name: string) => {
+    const index = store.get.editors.findIndex(editor => editor.id === id);
+    if (index < 0) return;
     setEditors(index, 'tab', 'tabName', name);
-    if (updateLanguage) {
-      const matches = SUPPORTED_LANGUAGES.filter(language => {
-        return language.icons.some(({matcher}) => matcher.test(name));
-      });
-      if (
-        !matches.length ||
-        matches
-          .map(match => match.id)
-          .includes(store.get.editors[index].languageId)
-      ) {
-        return;
-      }
-      setEditors(index, 'languageId', matches[0].id);
-    }
+    store.dispatch(editorUpdateCommand, void 0);
+  };
+
+  const setTabIcon = (id: string, icon: string | undefined) => {
+    const index = store.get.editors.findIndex(editor => editor.id === id);
+    if (index < 0) return;
+    setEditors(index, 'tab', 'tabIcon', icon);
     store.dispatch(editorUpdateCommand, void 0);
   };
 
@@ -305,6 +301,7 @@ export function createEditorsStore() {
       addEditor,
       removeEditor,
       setTabName,
+      setTabIcon,
       setFromWorkspace,
       ...store.actions,
       setFontId(fontId: string) {
