@@ -14,17 +14,12 @@ import {DynamicSizedContainer} from '@ui/DynamicSizedContainer/DynamicSizedConta
 import {SegmentedField} from '@ui/SegmentedField/SegmentedField';
 import {SkeletonLine} from '@ui/Skeleton/Skeleton';
 import type {ParentComponent} from 'solid-js';
-import {createMemo, createSignal, For, Show} from 'solid-js';
+import {createMemo, createSignal, Show} from 'solid-js';
 import type {AppLocaleEntries} from '../../i18n';
 import {FontPicker} from './controls/FontPicker/FontPicker';
 import {PanelDivider} from './PanelDivider';
 import {PanelHeader} from './PanelHeader';
 import {PanelRow, TwoColumnPanelRow} from './PanelRow';
-import {
-  highlightColorButton,
-  highlightColorSwatch,
-  highlightPalette,
-} from './EditorSidebar.css';
 import {SuspenseEditorItem} from './SuspenseEditorItem';
 
 const languages: readonly LanguageDefinition[] = [...SUPPORTED_LANGUAGES].sort(
@@ -43,7 +38,8 @@ const languages: readonly LanguageDefinition[] = [...SUPPORTED_LANGUAGES].sort(
 
 export const EditorStyleForm: ParentComponent = () => {
   const {themeArray} = getThemeStore();
-  const [manualColoringEnabled, setManualColoringEnabled] = createSignal(false);
+  const [selectedManualCategory, setSelectedManualCategory] =
+    createSignal('function');
   const {lineNumbers: lineNumbersConfig} = appEnvironment;
   const [t] = useI18n<AppLocaleEntries>();
   const {
@@ -53,7 +49,7 @@ export const EditorStyleForm: ParentComponent = () => {
     setFormatterName,
     setLineNumberStart,
     hasSelection,
-    applyColorToSelection,
+    applySyntaxCategoryToSelection,
   } = getActiveEditorStore();
   const {
     state,
@@ -86,17 +82,61 @@ export const EditorStyleForm: ParentComponent = () => {
     {key: 'label', valueKey: 'value'},
   );
 
-  const manualHighlightColors = createMemo(() => {
+  const manualHighlightCategories = createMemo(() => {
     const theme =
       themeArray().find(item => item()?.id === state.options.themeId)?.() ??
       themeArray()[0]?.();
-    if (!theme) return [];
-    const colors = [
-      ...getEditorThemeHighlightColors(theme.editorTheme),
-      ...(theme.properties.highlightColors ?? []),
-    ];
-    return colors;
+    const themeCategories = theme
+      ? [
+          ...getEditorThemeHighlightColors(theme.editorTheme),
+          ...(theme.properties.highlightColors ?? []),
+        ]
+      : [];
+    const categoryLabels = [
+      ['base', 'Text'],
+      ['keywords', 'Keyword'],
+      ['strings', 'String'],
+      ['numbers', 'Number'],
+      ['comments', 'Comment'],
+      ['function', 'Function'],
+      ['className', 'Class'],
+      ['typeName', 'Type'],
+      ['propertyName', 'Property'],
+      ['variableName', 'Variable'],
+      ['variableNameSpecial', 'Special variable'],
+      ['boolean', 'Boolean'],
+      ['tag', 'Tag'],
+      ['regexp', 'Regular expression'],
+      ['punctuation', 'Punctuation'],
+      ['delimiters', 'Delimiter'],
+      ['operators', 'Operator'],
+      ['attrName', 'Attribute name'],
+      ['attrValue', 'Attribute value'],
+      ['self', 'Self reference'],
+      ['annotation', 'Annotation'],
+      ['meta', 'Metadata'],
+      ['paren', 'Parenthesis'],
+      ['brackets', 'Bracket'],
+      ['atom', 'Atom'],
+    ] as const;
+    return categoryLabels.map(([id, label]) => ({
+      id,
+      label,
+      color: themeCategories.find(category => category.id === id)?.color ?? '',
+    }));
   });
+
+  const manualHighlightCategoryOptions = createSelectOptions(
+    () =>
+      manualHighlightCategories().map(category => ({
+        label: category.label,
+        value: category.id,
+      })),
+    {key: 'label', valueKey: 'value'},
+  );
+
+  const activeManualCategory = createMemo(() => selectedManualCategory());
+  const isPlainText = createMemo(() => editor()?.languageId === 'plain-text');
 
   const languageFormatterOptions = createSelectOptions(
     () =>
@@ -158,6 +198,86 @@ export const EditorStyleForm: ParentComponent = () => {
               </TwoColumnPanelRow>
             </PanelRow>
 
+            <Show
+              when={manualHighlightCategories().length > 0}
+              fallback={
+                <PanelRow
+                  for={'manualSyntaxCategoryUnavailable'}
+                  label={'Manual syntax coloring'}
+                >
+                  <TwoColumnPanelRow>
+                    <span>Select Plain Text to enable manual syntax coloring.</span>
+                  </TwoColumnPanelRow>
+                </PanelRow>
+              }
+            >
+              <>
+                <PanelRow
+                  for={'manualSyntaxCategoryField'}
+                  label={'Syntax category'}
+                >
+                  <TwoColumnPanelRow>
+                    <SuspenseEditorItem
+                      fallback={<SkeletonLine width={'100%'} height={'26px'} />}
+                    >
+                      {/* @ts-expect-error Fix @codeui/kit types */}
+                      <Select
+                        {...manualHighlightCategoryOptions.props()}
+                        {...manualHighlightCategoryOptions.controlled(
+                          () => activeManualCategory(),
+                          category =>
+                            setSelectedManualCategory(category as string),
+                        )}
+                        options={manualHighlightCategoryOptions.options()}
+                        aria-label={'Syntax category'}
+                        id={'manualSyntaxCategoryField'}
+                        size={'xs'}
+                        disabled={!isPlainText()}
+                      />
+                    </SuspenseEditorItem>
+                  </TwoColumnPanelRow>
+                </PanelRow>
+
+                <PanelRow
+                  for={'manualSyntaxApplyButton'}
+                  label={'Selection'}
+                >
+                  <TwoColumnPanelRow>
+                    <Button
+                      id={'manualSyntaxApplyButton'}
+                      size={'xs'}
+                      theme={'secondary'}
+                      block
+                      disabled={!isPlainText() || !hasSelection()}
+                      onClick={() =>
+                        applySyntaxCategoryToSelection(activeManualCategory())
+                      }
+                    >
+                      Apply category
+                    </Button>
+                  </TwoColumnPanelRow>
+                </PanelRow>
+
+                <PanelRow
+                  for={'manualSyntaxClearButton'}
+                  label={'Override'}
+                >
+                  <TwoColumnPanelRow>
+                    <Button
+                      id={'manualSyntaxClearButton'}
+                      size={'xs'}
+                      theme={'secondary'}
+                      block
+                      disabled={!isPlainText() || !hasSelection()}
+                      onClick={() => applySyntaxCategoryToSelection(null)}
+                    >
+                      Clear category
+                    </Button>
+                  </TwoColumnPanelRow>
+                </PanelRow>
+              </>
+            </Show>
+
             <PanelRow for={'frameLanguageField'} label={t('frame.theme')}>
               <TwoColumnPanelRow>
                 <SuspenseEditorItem
@@ -184,62 +304,6 @@ export const EditorStyleForm: ParentComponent = () => {
                 </SuspenseEditorItem>
               </TwoColumnPanelRow>
             </PanelRow>
-
-            <PanelRow for={'manualTextColoringToggle'} label={'Manual text colors'}>
-              <TwoColumnPanelRow>
-                <Button
-                  id={'manualTextColoringToggle'}
-                  size={'xs'}
-                  theme={'secondary'}
-                  block
-                  onClick={() => setManualColoringEnabled(enabled => !enabled)}
-                  aria-pressed={manualColoringEnabled()}
-                >
-                  {manualColoringEnabled() ? 'Disable coloring' : 'Enable coloring'}
-                </Button>
-              </TwoColumnPanelRow>
-            </PanelRow>
-
-            <Show when={manualColoringEnabled()}>
-              <PanelRow for={'manualTextColorPalette'} label={'Color selection'}>
-                <div class={highlightPalette} id={'manualTextColorPalette'}>
-                  <For each={manualHighlightColors()}>
-                    {color => (
-                      <button
-                        type={'button'}
-                        class={highlightColorButton}
-                        title={color.label}
-                        aria-label={color.label}
-                        disabled={!hasSelection()}
-                        onClick={() => applyColorToSelection(color.id)}
-                      >
-                        <span
-                          class={highlightColorSwatch}
-                          style={{background: color.color}}
-                        />
-                      </button>
-                    )}
-                  </For>
-                  <button
-                    type={'button'}
-                    class={highlightColorButton}
-                    title={'Clear color'}
-                    aria-label={'Clear color'}
-                    disabled={!hasSelection()}
-                    onClick={() => applyColorToSelection(null)}
-                  >
-                    <span class={highlightColorSwatch} />
-                  </button>
-                </div>
-              </PanelRow>
-              <Show when={!manualHighlightColors().length}>
-                <PanelRow for={'manualTextColorUnavailable'} label={'Palette'}>
-                  <TwoColumnPanelRow>
-                    <span>No manual text colors are available for this theme.</span>
-                  </TwoColumnPanelRow>
-                </PanelRow>
-              </Show>
-            </Show>
 
             <Show
               when={formatter.availableFormatters().length > 0}

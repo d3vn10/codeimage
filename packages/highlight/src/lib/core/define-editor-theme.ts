@@ -73,6 +73,9 @@ export const defineEditorTheme = (theme: ThemeOptions) => {
     '&': {
       color: highlight.base,
     },
+    '.cm-content': {
+      color: highlight.base,
+    },
   });
 
   const extensions: Extension[] = [

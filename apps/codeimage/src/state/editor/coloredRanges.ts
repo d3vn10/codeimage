@@ -48,7 +48,7 @@ export function normalizeColoredRanges(
 export function applyColorToSelections(
   currentRanges: readonly ColoredTextRange[],
   selections: readonly TextSelectionRange[],
-  color: string | null,
+  category: string | null,
 ): ColoredTextRange[] {
   let next = normalizeColoredRanges(currentRanges);
   const selected = selections
@@ -70,7 +70,7 @@ export function applyColorToSelections(
       }
       return remaining;
     });
-    if (color) next.push({...selection, color});
+    if (category) next.push({...selection, color: category});
   }
 
   return normalizeColoredRanges(next);
@@ -92,8 +92,8 @@ export function mapColoredRangesThroughChanges(
 }
 
 /**
- * Keeps ranges outside a programmatically replaced text region. Any color
- * intersecting the replacement is dropped rather than being applied to
+ * Keeps ranges outside a programmatically replaced text region. Any syntax
+ * override intersecting the replacement is dropped rather than being applied to
  * unrelated text after formatting.
  */
 export function mapColoredRangesThroughTextReplacement(

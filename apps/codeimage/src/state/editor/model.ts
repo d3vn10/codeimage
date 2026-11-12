@@ -11,6 +11,7 @@ export interface EditorUIOptions {
 export interface ColoredTextRange {
   from: number;
   to: number;
+  /** Syntax category ID (for example, "function" or "comments"). */
   color: string;
 }
 

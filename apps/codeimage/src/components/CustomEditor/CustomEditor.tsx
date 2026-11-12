@@ -118,6 +118,15 @@ export default function CustomEditor(props: VoidProps<CustomEditorProps>) {
       themes()[0](),
   );
 
+  const manualHighlightCategories = createMemo(() => {
+    const theme = themeConfiguration();
+    if (!theme) return [];
+    return [
+      ...getEditorThemeHighlightColors(theme.editorTheme),
+      ...(theme.properties.highlightColors ?? []),
+    ];
+  });
+
   const baseTheme = EditorView.theme({
     '&': {
       textAlign: 'left',
@@ -203,15 +212,24 @@ export default function CustomEditor(props: VoidProps<CustomEditorProps>) {
       : [];
   });
   createExtension(() => themeConfiguration()?.editorTheme || []);
+  createExtension(() => {
+    const theme = themeConfiguration();
+    if (!theme) return [];
+    const baseForeground =
+      manualHighlightCategories().find(category => category.id === 'base')
+        ?.color ??
+      theme.properties.terminal.text ??
+      (theme.properties.darkMode ? '#ffffff' : '#000000');
+    return EditorView.theme({
+      '.cm-content': {
+        color: baseForeground,
+      },
+    });
+  });
   createExtension(() =>
     createManualHighlightExtension(
       editor()?.coloredRanges ?? [],
-      [
-        ...getEditorThemeHighlightColors(
-          themeConfiguration()?.editorTheme ?? [],
-        ),
-        ...(themeConfiguration()?.properties.highlightColors ?? []),
-      ],
+      manualHighlightCategories(),
       editor()?.code.length ?? 0,
     ),
   );
