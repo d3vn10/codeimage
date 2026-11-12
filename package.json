@@ -99,6 +99,7 @@
       "@motionone/solid": "patches/@motionone__solid.patch"
     },
     "onlyBuiltDependencies": [
+      "electron",
       "esbuild",
       "lightningcss"
     ]
