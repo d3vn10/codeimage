@@ -1,4 +1,3 @@
-import {SUPPORTED_LANGUAGES} from '@codeimage/config';
 import {useI18n} from '@codeimage/locale';
 import {getRootEditorStore} from '@codeimage/store/editor';
 import {getUiStore} from '@codeimage/store/ui';
@@ -17,7 +16,6 @@ import type {AppLocaleEntries} from '../../i18n';
 
 const $activeEditorState = () => {
   return createRoot(() => {
-    const languages = SUPPORTED_LANGUAGES;
     const {
       state,
       isActive,
