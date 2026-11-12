@@ -8,10 +8,15 @@ import {
   createResource,
   createRoot,
   createSignal,
+  getOwner,
+  runWithOwner,
   mapArray,
 } from 'solid-js';
 
 function $getThemeStore() {
+  const owner = getOwner();
+  if (!owner) throw new Error('Theme store requires a Solid owner');
+
   const [loaded, setLoaded] = createSignal(false, {equals: false});
   const [customThemeDefinitions, setCustomThemeDefinitions] = createSignal(readCustomThemeDefinitions());
 
@@ -21,7 +26,7 @@ function $getThemeStore() {
     ),
   );
 
-  const customThemeResources = createMemo(() =>
+  const [customThemeResources, setCustomThemeResources] = createSignal(
     customThemeDefinitions().map(definition => ({
       id: definition.id,
       resource: createResource(loaded, () => Promise.resolve(buildCustomTheme(definition))),
@@ -61,6 +66,13 @@ function $getThemeStore() {
     const next = [...customThemeDefinitions().filter(item => item.id !== definition.id), definition];
     setCustomThemeDefinitions(next);
     writeCustomThemeDefinitions(next);
+    const resource = runWithOwner(owner, () =>
+      createResource(loaded, () => Promise.resolve(buildCustomTheme(definition))),
+    );
+    setCustomThemeResources(items => [
+      ...items.filter(item => item.id !== definition.id),
+      {id: definition.id, resource},
+    ]);
 
   };
 
