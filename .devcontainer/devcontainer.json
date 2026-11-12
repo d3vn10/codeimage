@@ -1,0 +1,29 @@
+{
+  "name": "CodeImage",
+  "dockerComposeFile": [
+    "docker-compose.yml",
+    "../apps/api/docker-compose.dev.yml"
+  ],
+  "service": "workspace",
+  "workspaceFolder": "/workspaces/codeimage",
+  "shutdownAction": "stopCompose",
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "forwardPorts": [3000, 5173],
+  "portsAttributes": {
+    "3000": {
+      "label": "CodeImage API",
+      "onAutoForward": "notify"
+    },
+    "5173": {
+      "label": "CodeImage frontend",
+      "onAutoForward": "openBrowser"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "Prisma.prisma"
+      ]
+    }
+  }
+}

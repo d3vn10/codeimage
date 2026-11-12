@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import {cpSync, existsSync, mkdirSync, rmdirSync, writeFileSync} from 'node:fs';
+import {cpSync, existsSync, mkdirSync, rmSync, writeFileSync} from 'node:fs';
 import {join, resolve} from 'node:path';
 import type {ConfigEnv, Plugin, ResolvedConfig} from 'vite';
 
@@ -45,7 +45,7 @@ export function withStaticVercelPreview(options?: {folder: string}): Plugin {
     buildStart() {
       const vercelDir = getVercelDir();
       if (existsSync(vercelDir)) {
-        rmdirSync(vercelDir, {recursive: true});
+        rmSync(vercelDir, {recursive: true, force: true});
       }
     },
     closeBundle() {

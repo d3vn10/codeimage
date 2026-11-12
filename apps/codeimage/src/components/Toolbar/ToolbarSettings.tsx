@@ -13,7 +13,6 @@ import {useNavigate} from '@solidjs/router';
 import {Show} from 'solid-js';
 import {Changelog} from '../Changelog/Changelog';
 import {MenuAlt2Icon} from '../Icons/DotVertical';
-import {ExternalLinkIcon} from '../Icons/ExternalLink';
 import {SettingsDialog} from './SettingsDialog';
 
 export function ToolbarSettingsButton() {
@@ -42,17 +41,6 @@ export function ToolbarSettingsButton() {
           <DropdownMenuItem onClick={() => openDialog(Changelog, {})}>
             Changelog
           </DropdownMenuItem>
-          <DropdownMenuItem
-            rightSlot={<ExternalLinkIcon />}
-            as={'a'}
-            target={'_blank'}
-            // TODO: add codeui dropdownMenuItemLink style
-            style={{'text-decoration': 'unset'}}
-            href={'https://github.com/riccardoperra/codeimage'}
-          >
-            GitHub
-          </DropdownMenuItem>
-
           <Show when={loggedIn()}>
             <DropdownMenuItem
               onClick={() => signOut().then(() => navigate('/'))}

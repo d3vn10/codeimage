@@ -8,6 +8,13 @@ export interface EditorUIOptions {
   themeId: string;
 }
 
+export interface ColoredTextRange {
+  from: number;
+  to: number;
+  /** Syntax category ID (for example, "function" or "comments"). */
+  color: string;
+}
+
 export interface TabState {
   tabName: string | null;
   tabIcon?: string;
@@ -20,6 +27,7 @@ export interface EditorState {
   formatter?: string | null;
   languageId: string;
   lineNumberStart: number;
+  coloredRanges: ColoredTextRange[];
 }
 
 export interface EditorUIOptions {
@@ -29,6 +37,8 @@ export interface EditorUIOptions {
   focused: boolean;
   themeId: string;
   enableLigatures: boolean;
+  fontSize: number;
+  lineHeight: number;
 }
 
 export interface PersistedEditorState {
@@ -37,8 +47,10 @@ export interface PersistedEditorState {
     id: string;
     code: string;
     tabName: string;
+    tabIcon?: string;
     languageId: string;
     lineNumberStart: number;
+    coloredRanges: ColoredTextRange[];
   }[];
 }
 

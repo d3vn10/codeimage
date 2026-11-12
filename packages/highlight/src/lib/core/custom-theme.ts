@@ -1,5 +1,12 @@
 import type {Extension} from '@codemirror/state';
 
+/** Color associated with a syntax category in a CodeImage editor theme. */
+export interface ManualHighlightColor {
+  id: string;
+  label: string;
+  color: string;
+}
+
 export interface TerminalTabsTheme {
   background?: string;
   activeTabBackground?: string;
@@ -39,6 +46,11 @@ export interface CustomThemeProperties {
    * @description MacOsTerminal theme properties
    */
   terminal: TerminalThemeProperties;
+  /**
+   * Optional syntax-category colors for themes without semantic highlight
+   * styles.
+   */
+  highlightColors?: readonly ManualHighlightColor[];
 }
 
 export interface CustomTheme {

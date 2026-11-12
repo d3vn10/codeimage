@@ -15,7 +15,8 @@
     "pre-commit-eslint": "oxlint --fix",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:desktop": "vite build --mode desktop"
   },
   "devDependencies": {
     "@mdx-js/mdx": "catalog:next",

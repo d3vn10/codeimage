@@ -63,7 +63,9 @@ const config: UserConfigExport = defineConfig(({mode}) => ({
         }, {});
       },
     },
-    withStaticVercelPreview() as unknown as Plugin,
+    ...(mode === 'desktop'
+      ? []
+      : [withStaticVercelPreview() as unknown as Plugin]),
   ],
   server: {
     strictPort: true,
@@ -82,7 +84,7 @@ const config: UserConfigExport = defineConfig(({mode}) => ({
   build: {
     sourcemap: false,
     minify: true,
-    polyfillModulePreload: false,
+    modulePreload: {polyfill: false},
     polyfillDynamicImport: false,
     cssCodeSplit: true,
     reportCompressedSize: true,

@@ -13,6 +13,7 @@ export const grid = recipe({
     gap: themeVars.spacing['8'],
     padding: themeVars.spacing['4'],
     height: '100%',
+    boxSizing: 'border-box',
     gridAutoRows: 'min-content',
   },
   variants: {
@@ -25,6 +26,7 @@ export const grid = recipe({
       },
       vertical: {
         gridTemplateColumns: '1fr',
+        paddingBottom: themeVars.spacing['8'],
       },
     },
   },

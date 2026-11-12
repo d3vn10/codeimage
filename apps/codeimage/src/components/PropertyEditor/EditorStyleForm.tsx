@@ -1,19 +1,20 @@
 import {SUPPORTED_LANGUAGES} from '@codeimage/config';
 import type {LanguageDefinition} from '@codeimage/config';
+import {getEditorThemeHighlightColors} from '@codeimage/highlight';
 import type {CustomTheme} from '@codeimage/highlight';
 import {useI18n} from '@codeimage/locale';
 import {getRootEditorStore} from '@codeimage/store/editor';
 import {getActiveEditorStore} from '@codeimage/store/editor/activeEditor';
 import {dispatchUpdateTheme} from '@codeimage/store/effects/onThemeChange';
 import {getThemeStore} from '@codeimage/store/theme/theme.store';
-import {createSelectOptions, NumberField, Select} from '@codeui/kit';
+import {Button, createSelectOptions, fieldStyles, NumberField, Select} from '@codeui/kit';
 import {appEnvironment} from '@core/configuration';
 import {getUmami} from '@core/constants/umami';
 import {DynamicSizedContainer} from '@ui/DynamicSizedContainer/DynamicSizedContainer';
 import {SegmentedField} from '@ui/SegmentedField/SegmentedField';
 import {SkeletonLine} from '@ui/Skeleton/Skeleton';
 import type {ParentComponent} from 'solid-js';
-import {Show} from 'solid-js';
+import {createEffect, createMemo, createSignal, Show} from 'solid-js';
 import type {AppLocaleEntries} from '../../i18n';
 import {FontPicker} from './controls/FontPicker/FontPicker';
 import {PanelDivider} from './PanelDivider';
@@ -37,6 +38,8 @@ const languages: readonly LanguageDefinition[] = [...SUPPORTED_LANGUAGES].sort(
 
 export const EditorStyleForm: ParentComponent = () => {
   const {themeArray} = getThemeStore();
+  const [selectedManualCategory, setSelectedManualCategory] =
+    createSignal('function');
   const {lineNumbers: lineNumbersConfig} = appEnvironment;
   const [t] = useI18n<AppLocaleEntries>();
   const {
@@ -45,10 +48,20 @@ export const EditorStyleForm: ParentComponent = () => {
     formatter,
     setFormatterName,
     setLineNumberStart,
+    hasSelection,
+    applySyntaxCategoryToSelection,
   } = getActiveEditorStore();
   const {
     state,
-    actions: {setShowLineNumbers, setFontWeight, setFontId, setEnableLigatures},
+    actions: {
+      setShowLineNumbers,
+      setFontWeight,
+      setFontId,
+      setEnableLigatures,
+      setFontSize,
+      setLineHeight,
+      setTabIcon,
+    },
     computed: {selectedFont},
   } = getRootEditorStore();
 
@@ -61,6 +74,22 @@ export const EditorStyleForm: ParentComponent = () => {
       key: 'label',
       valueKey: 'value',
     },
+  );
+
+  const tabIconOptions = createSelectOptions(
+    [
+      {label: 'Automatic', value: ''},
+      ...SUPPORTED_LANGUAGES.flatMap(language => language.icons)
+        .filter(
+          (icon, index, icons) =>
+            icons.findIndex(item => item.extension === icon.extension) === index,
+        )
+        .map(icon => ({
+          label: `${icon.name} (${icon.extension})`,
+          value: icon.extension,
+        })),
+    ],
+    {key: 'label', valueKey: 'value'},
   );
 
   const syntaxHighlightOptions = createSelectOptions(
@@ -76,6 +105,70 @@ export const EditorStyleForm: ParentComponent = () => {
         }),
     {key: 'label', valueKey: 'value'},
   );
+
+  const manualHighlightCategories = createMemo(() => {
+    const theme =
+      themeArray().find(item => item()?.id === state.options.themeId)?.() ??
+      themeArray()[0]?.();
+    const themeCategories = theme
+      ? [
+          ...getEditorThemeHighlightColors(theme.editorTheme),
+          ...(theme.properties.highlightColors ?? []),
+        ]
+      : [];
+    const categoryLabels = [
+      ['base', 'Text'],
+      ['keywords', 'Keyword'],
+      ['strings', 'String'],
+      ['numbers', 'Number'],
+      ['comments', 'Comment'],
+      ['function', 'Function'],
+      ['className', 'Class'],
+      ['typeName', 'Type'],
+      ['propertyName', 'Property'],
+      ['variableName', 'Variable'],
+      ['variableNameSpecial', 'Special variable'],
+      ['boolean', 'Boolean'],
+      ['tag', 'Tag'],
+      ['regexp', 'Regular expression'],
+      ['punctuation', 'Punctuation'],
+      ['delimiters', 'Delimiter'],
+      ['operators', 'Operator'],
+      ['attrName', 'Attribute name'],
+      ['attrValue', 'Attribute value'],
+      ['self', 'Self reference'],
+      ['annotation', 'Annotation'],
+      ['meta', 'Metadata'],
+      ['paren', 'Parenthesis'],
+      ['brackets', 'Bracket'],
+      ['atom', 'Atom'],
+    ] as const;
+    return categoryLabels.map(([id, label]) => ({
+      id,
+      label,
+      color: themeCategories.find(category => category.id === id)?.color ?? '',
+    }));
+  });
+
+  const manualHighlightCategoryOptions = createSelectOptions(
+    () =>
+      manualHighlightCategories().map(category => ({
+        label: category.label,
+        value: category.id,
+      })),
+    {key: 'label', valueKey: 'value'},
+  );
+
+  const [lineHeightInput, setLineHeightInput] = createSignal(
+    String(state.options.lineHeight ?? 1.5),
+  );
+
+  createEffect(() => {
+    setLineHeightInput(String(state.options.lineHeight ?? 1.5));
+  });
+
+  const activeManualCategory = createMemo(() => selectedManualCategory());
+  const isPlainText = createMemo(() => editor()?.languageId === 'plain-text');
 
   const languageFormatterOptions = createSelectOptions(
     () =>
@@ -136,6 +229,114 @@ export const EditorStyleForm: ParentComponent = () => {
                 </SuspenseEditorItem>
               </TwoColumnPanelRow>
             </PanelRow>
+
+            <PanelRow for={'frameTabIconField'} label={'Tab icon'}>
+              <TwoColumnPanelRow>
+                {/* @ts-expect-error Fix @codeui/kit types */}
+                <Select
+                  {...tabIconOptions.props()}
+                  {...tabIconOptions.controlled(
+                    () => editor().tab.tabIcon ?? '',
+                    icon => setTabIcon(editor().id, icon ? (icon as string) : undefined),
+                  )}
+                  options={tabIconOptions.options()}
+                  aria-label={'Tab icon'}
+                  id={'frameTabIconField'}
+                  size={'xs'}
+                />
+              </TwoColumnPanelRow>
+            </PanelRow>
+
+            <Show
+              when={manualHighlightCategories().length > 0}
+              fallback={
+                <PanelRow
+                  for={'manualSyntaxCategoryUnavailable'}
+                  label={'Manual syntax coloring'}
+                >
+                  <TwoColumnPanelRow>
+                    <span>Select Plain Text to enable manual syntax coloring.</span>
+                  </TwoColumnPanelRow>
+                </PanelRow>
+              }
+            >
+              <>
+                <PanelRow
+                  for={'manualSyntaxCategoryField'}
+                  label={'Syntax category'}
+                >
+                  <TwoColumnPanelRow>
+                    <SuspenseEditorItem
+                      fallback={<SkeletonLine width={'100%'} height={'26px'} />}
+                    >
+                      {/* @ts-expect-error Fix @codeui/kit types */}
+                      <Select
+                        {...manualHighlightCategoryOptions.props()}
+                        {...manualHighlightCategoryOptions.controlled(
+                          () => activeManualCategory(),
+                          category =>
+                            setSelectedManualCategory(category as string),
+                        )}
+                        options={manualHighlightCategoryOptions.options()}
+                        itemLabel={option => {
+                          const item = option as {label: string; value: string};
+                          const color = manualHighlightCategories().find(
+                            category => category.id === item.value,
+                          )?.color;
+                          return (
+                            <span style={{color: color || 'inherit'}}>
+                              {item.label}
+                            </span>
+                          );
+                        }}
+                        aria-label={'Syntax category'}
+                        id={'manualSyntaxCategoryField'}
+                        size={'xs'}
+                        disabled={!isPlainText()}
+                      />
+                    </SuspenseEditorItem>
+                  </TwoColumnPanelRow>
+                </PanelRow>
+
+                <PanelRow
+                  for={'manualSyntaxApplyButton'}
+                  label={'Selection'}
+                >
+                  <TwoColumnPanelRow>
+                    <Button
+                      id={'manualSyntaxApplyButton'}
+                      size={'xs'}
+                      theme={'secondary'}
+                      block
+                      disabled={!isPlainText() || !hasSelection()}
+                      onClick={() =>
+                        applySyntaxCategoryToSelection(activeManualCategory())
+                      }
+                    >
+                      Apply category
+                    </Button>
+                  </TwoColumnPanelRow>
+                </PanelRow>
+
+                <PanelRow
+                  for={'manualSyntaxClearButton'}
+                  label={'Override'}
+                >
+                  <TwoColumnPanelRow>
+                    <Button
+                      id={'manualSyntaxClearButton'}
+                      size={'xs'}
+                      theme={'secondary'}
+                      block
+                      disabled={!isPlainText() || !hasSelection()}
+                      onClick={() => applySyntaxCategoryToSelection(null)}
+                    >
+                      Clear category
+                    </Button>
+                  </TwoColumnPanelRow>
+                </PanelRow>
+              </>
+            </Show>
 
             <PanelRow for={'frameLanguageField'} label={t('frame.theme')}>
               <TwoColumnPanelRow>
@@ -296,6 +497,59 @@ export const EditorStyleForm: ParentComponent = () => {
                     size={'xs'}
                   />
                 </SuspenseEditorItem>
+              </TwoColumnPanelRow>
+            </PanelRow>
+
+            <PanelRow for={'frameFontSizeField'} label={'Font size'}>
+              <TwoColumnPanelRow>
+                <NumberField
+                  size={'xs'}
+                  id={'frameFontSizeField'}
+                  min={8}
+                  max={48}
+                  step={1}
+                  value={state.options.fontSize ?? 14}
+                  onChange={value => setFontSize(value)}
+                />
+              </TwoColumnPanelRow>
+            </PanelRow>
+
+            <PanelRow for={'frameLineHeightField'} label={'Line spacing'}>
+              <TwoColumnPanelRow>
+                <input
+                  id={'frameLineHeightField'}
+                  aria-label={'Line spacing'}
+                  class={fieldStyles.baseFieldVariants({size: 'xs'})}
+                  type={'number'}
+                  lang={'en'}
+                  inputMode={'decimal'}
+                  min={1}
+                  max={1.5}
+                  step={0.1}
+                  value={lineHeightInput()}
+                  style={{'padding-left': '12px', 'padding-right': '12px'}}
+                  onInput={event => {
+                    const rawValue = event.currentTarget.value;
+                    setLineHeightInput(rawValue);
+                    if (!rawValue || rawValue.endsWith('.')) return;
+                    const value = Number(rawValue);
+                    if (Number.isFinite(value) && value >= 1 && value <= 1.5) {
+                      setLineHeight(value);
+                    }
+                  }}
+                  onBlur={event => {
+                    const rawValue = event.currentTarget.value;
+                    const parsedValue = Number(rawValue);
+                    const value =
+                      rawValue && Number.isFinite(parsedValue)
+                        ? Math.round(
+                            Math.min(1.5, Math.max(1, parsedValue)) * 10,
+                          ) / 10
+                        : (state.options.lineHeight ?? 1.5);
+                    setLineHeight(value);
+                    setLineHeightInput(value.toFixed(1));
+                  }}
+                />
               </TwoColumnPanelRow>
             </PanelRow>
 

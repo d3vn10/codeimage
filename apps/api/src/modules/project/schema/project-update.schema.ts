@@ -24,6 +24,13 @@ export const SnippetEditorTabsUpdateRequestSchema = Type.Array(
       languageId: Type.String(),
       tabName: Type.String(),
       lineNumberStart: Type.Integer({minimum: 1, maximum: 999_999}),
+      coloredRanges: Type.Array(
+        Type.Object({
+          from: Type.Integer({minimum: 0}),
+          to: Type.Integer({minimum: 0}),
+          color: Type.String(),
+        }),
+      ),
     },
     {title: 'SnippetEditorTabUpdateRequest'},
   ),

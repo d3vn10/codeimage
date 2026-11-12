@@ -23,6 +23,7 @@ export function getInitialEditorState(): EditorState {
     languageId: appEnvironment.defaultState.editor.languageId,
     formatter: null,
     lineNumberStart: 1,
+    coloredRanges: [],
     tab: {
       tabName: 'index.tsx',
       tabIcon: undefined,
@@ -38,6 +39,8 @@ export function getInitialEditorUiOptions(): EditorUIOptions {
     fontWeight: appEnvironment.defaultState.editor.font.types[0].weight,
     focused: false,
     enableLigatures: true,
+    fontSize: 14,
+    lineHeight: 1.5,
   };
 }
 
@@ -59,6 +62,8 @@ export function createEditorsStore() {
       setFromPersistedState: PersistedEditorState;
       setFromPreset: PresetData['editor'];
       setEnableLigatures: boolean;
+      setFontSize: number;
+      setLineHeight: number;
     }>(),
   );
 
@@ -93,6 +98,12 @@ export function createEditorsStore() {
     .hold(store.commands.setEnableLigatures, (enable, {set}) =>
       set('options', 'enableLigatures', enable),
     )
+    .hold(store.commands.setFontSize, (fontSize, {set}) =>
+      set('options', 'fontSize', fontSize),
+    )
+    .hold(store.commands.setLineHeight, (lineHeight, {set}) =>
+      set('options', 'lineHeight', lineHeight),
+    )
     .hold(store.commands.setFromPreset, presetData => {
       store.set('options', presetData);
       store.dispatch(editorUpdateCommand, void 0);
@@ -102,10 +113,12 @@ export function createEditorsStore() {
         .slice(0, MAX_TABS)
         .map(editor => ({
           tabName: editor.tabName,
+          tabIcon: editor.tabIcon,
           languageId: editor.languageId,
           id: editor.id,
           code: editor.code,
           lineNumberStart: editor.lineNumberStart,
+          coloredRanges: editor.coloredRanges ?? [],
         }));
       return {
         options: {...state.options, ...persistedState.options},
@@ -114,9 +127,10 @@ export function createEditorsStore() {
           return {
             code: editor.code,
             languageId: editor.languageId,
-            tab: {tabName: editor.tabName},
+            tab: {tabName: editor.tabName, tabIcon: editor.tabIcon},
             id: editor.id,
             lineNumberStart: editor.lineNumberStart,
+            coloredRanges: editor.coloredRanges ?? [],
           };
         }),
       };
@@ -138,8 +152,10 @@ export function createEditorsStore() {
           languageId: editor.languageId,
           code: editor.code,
           tabName: editor.tab.tabName ?? '',
+          tabIcon: editor.tab.tabIcon,
           id: editor.id,
           lineNumberStart: editor.lineNumberStart ?? 1,
+          coloredRanges: editor.coloredRanges ?? [],
         };
       }),
       options: {
@@ -148,6 +164,8 @@ export function createEditorsStore() {
         fontId: state.options.fontId,
         fontWeight: state.options.fontWeight,
         enableLigatures: state.options.enableLigatures ?? true,
+        fontSize: state.options.fontSize ?? 14,
+        lineHeight: state.options.lineHeight ?? 1.5,
       },
     };
   };
@@ -159,6 +177,8 @@ export function createEditorsStore() {
       store.commands.setFontWeight,
       store.commands.setShowLineNumbers,
       store.commands.setEnableLigatures,
+      store.commands.setFontSize,
+      store.commands.setLineHeight,
       editorUpdateCommand,
     ]),
   ).pipe(
@@ -205,23 +225,17 @@ export function createEditorsStore() {
     store.dispatch(editorUpdateCommand, void 0);
   };
 
-  const setTabName = (id: string, name: string, updateLanguage: boolean) => {
-    const index = store.get.editors.findIndex(tab => isActive(tab.id));
+  const setTabName = (id: string, name: string) => {
+    const index = store.get.editors.findIndex(editor => editor.id === id);
+    if (index < 0) return;
     setEditors(index, 'tab', 'tabName', name);
-    if (updateLanguage) {
-      const matches = SUPPORTED_LANGUAGES.filter(language => {
-        return language.icons.some(({matcher}) => matcher.test(name));
-      });
-      if (
-        !matches.length ||
-        matches
-          .map(match => match.id)
-          .includes(store.get.editors[index].languageId)
-      ) {
-        return;
-      }
-      setEditors(index, 'languageId', matches[0].id);
-    }
+    store.dispatch(editorUpdateCommand, void 0);
+  };
+
+  const setTabIcon = (id: string, icon: string | undefined) => {
+    const index = store.get.editors.findIndex(editor => editor.id === id);
+    if (index < 0) return;
+    setEditors(index, 'tab', 'tabIcon', icon);
     store.dispatch(editorUpdateCommand, void 0);
   };
 
@@ -250,6 +264,7 @@ export function createEditorsStore() {
             id: editor.id,
             code: editor.code,
             lineNumberStart: editor.lineNumberStart ?? 1,
+            coloredRanges: editor.coloredRanges ?? [],
           }) as EditorState,
       ),
     );
@@ -286,6 +301,7 @@ export function createEditorsStore() {
       addEditor,
       removeEditor,
       setTabName,
+      setTabIcon,
       setFromWorkspace,
       ...store.actions,
       setFontId(fontId: string) {

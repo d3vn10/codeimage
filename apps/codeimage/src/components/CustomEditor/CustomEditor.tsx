@@ -1,5 +1,6 @@
 import {SUPPORTED_LANGUAGES} from '@codeimage/config';
 import {getRootEditorStore} from '@codeimage/store/editor';
+import {getEditorThemeHighlightColors} from '@codeimage/highlight';
 import {getActiveEditorStore} from '@codeimage/store/editor/activeEditor';
 import {getThemeStore} from '@codeimage/store/theme/theme.store';
 import {
@@ -16,7 +17,7 @@ import {
 } from '@codemirror/commands';
 import {bracketMatching, indentOnInput} from '@codemirror/language';
 import type {Extension} from '@codemirror/state';
-import {EditorState} from '@codemirror/state';
+import {EditorState, Transaction} from '@codemirror/state';
 import {
   crosshairCursor,
   drawSelection,
@@ -31,6 +32,7 @@ import {createCodeMirror, createEditorReadonly} from 'solid-codemirror';
 import type {VoidProps} from 'solid-js';
 import {createEffect, createMemo, createResource, on} from 'solid-js';
 import {createTabIcon} from '../../hooks/use-tab-icon';
+import {createManualHighlightExtension} from './manual-highlight';
 
 const EDITOR_BASE_SETUP: Extension = [
   highlightSpecialChars(),
@@ -67,7 +69,11 @@ export default function CustomEditor(props: VoidProps<CustomEditorProps>) {
     canvasEditorEvents,
     computed: {selectedFont},
   } = getRootEditorStore();
-  const {editor} = getActiveEditorStore();
+  const {
+    editor,
+    setSelectionRanges,
+    mapColoredRanges,
+  } = getActiveEditorStore();
   const selectedLanguage = createMemo(() =>
     languages.find(language => language.id === editor()?.languageId),
   );
@@ -92,6 +98,7 @@ export default function CustomEditor(props: VoidProps<CustomEditorProps>) {
     () => editor()?.tab.tabName ?? null,
     () => editor()?.languageId ?? '',
     true,
+    () => editor()?.tab.tabIcon,
   );
 
   const [currentExtraLanguage] = createResource(icon, iconDef => {
@@ -112,37 +119,55 @@ export default function CustomEditor(props: VoidProps<CustomEditorProps>) {
       themes()[0](),
   );
 
-  const baseTheme = EditorView.theme({
-    '&': {
-      textAlign: 'left',
-      background: 'transparent !important',
-    },
-    '.cm-content': {
-      textAlign: 'left',
-    },
-    '.cm-gutters': {
-      backgroundColor: 'transparent',
-      border: 'none',
-    },
-    '.cm-lineNumbers': {
-      position: 'sticky',
-      flexDirection: 'column',
-      flexShrink: 0,
-    },
-    '.cm-lineNumbers .cm-gutterElement': {
-      textAlign: 'right',
-      padding: '0 16px 0 8px',
-      lineHeight: '21px',
-    },
-    '.cm-line': {
-      padding: '0 2px 0 8px',
-    },
-    '.cm-cursor': {
-      borderLeftWidth: '2px',
-      height: '21px',
-      transform: 'translateY(-10%)',
-    },
+  const manualHighlightCategories = createMemo(() => {
+    const theme = themeConfiguration();
+    if (!theme) return [];
+    return [
+      ...getEditorThemeHighlightColors(theme.editorTheme),
+      ...(theme.properties.highlightColors ?? []),
+    ];
   });
+
+  const baseTheme = () => {
+    const fontSize = editorState.options.fontSize ?? 14;
+    const lineHeight = editorState.options.lineHeight ?? 1.5;
+    const lineHeightPx = `${fontSize * lineHeight}px`;
+
+    return EditorView.theme({
+      '&': {
+        textAlign: 'left',
+        background: 'transparent !important',
+      },
+      '.cm-content': {
+        textAlign: 'left',
+        fontSize: `${fontSize}px`,
+        lineHeight: String(lineHeight),
+      },
+      '.cm-gutters': {
+        backgroundColor: 'transparent',
+        border: 'none',
+      },
+      '.cm-lineNumbers': {
+        position: 'sticky',
+        flexDirection: 'column',
+        flexShrink: 0,
+      },
+      '.cm-lineNumbers .cm-gutterElement': {
+        textAlign: 'right',
+        padding: '0 16px 0 8px',
+        lineHeight: lineHeightPx,
+      },
+      '.cm-line': {
+        padding: '0 2px 0 8px',
+        lineHeight: lineHeightPx,
+      },
+      '.cm-cursor': {
+        borderLeftWidth: '2px',
+        height: lineHeightPx,
+        transform: 'translateY(-10%)',
+      },
+    });
+  };
 
   const customFontExtension = (): Extension => {
     const font = selectedFont();
@@ -197,7 +222,44 @@ export default function CustomEditor(props: VoidProps<CustomEditorProps>) {
       : [];
   });
   createExtension(() => themeConfiguration()?.editorTheme || []);
-  createExtension(baseTheme);
+  createExtension(() => {
+    const theme = themeConfiguration();
+    if (!theme) return [];
+    const baseForeground =
+      manualHighlightCategories().find(category => category.id === 'base')
+        ?.color ??
+      theme.properties.terminal.text ??
+      (theme.properties.darkMode ? '#ffffff' : '#000000');
+    return EditorView.theme({
+      '.cm-content': {
+        color: baseForeground,
+      },
+    });
+  });
+  createExtension(() =>
+    createManualHighlightExtension(
+      editor()?.coloredRanges ?? [],
+      manualHighlightCategories(),
+      editor()?.code.length ?? 0,
+    ),
+  );
+  createExtension(() =>
+    EditorView.updateListener.of(update => {
+      if (props.readOnly) return;
+      if (
+        update.docChanged &&
+        update.transactions.some(transaction =>
+          transaction.annotation(Transaction.userEvent),
+        )
+      ) {
+        mapColoredRanges([update.changes]);
+      }
+      if (update.selectionSet || update.docChanged) {
+        setSelectionRanges(update.state.selection.ranges);
+      }
+    }),
+  );
+  createExtension(() => baseTheme());
 
   const reconfigureBaseSetup = createExtension(EDITOR_BASE_SETUP);
 

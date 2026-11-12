@@ -12,6 +12,8 @@ export const sidebar = style([
   sidebarTheme,
   {
     paddingLeft: sidebarVars.gap,
+    paddingBottom: themeVars.spacing['8'],
+    boxSizing: 'border-box',
   },
 ]);
 
@@ -89,4 +91,48 @@ export const titleWrapper = style([
 export const panelDivider = style({
   borderBottom: `1px solid ${themeVars.dynamicColors.divider}`,
   paddingTop: themeVars.spacing['4'],
+});
+
+export const highlightPalette = style({
+  display: 'flex',
+  alignItems: 'center',
+  flexWrap: 'wrap',
+  gap: themeVars.spacing['2'],
+  gridColumn: '2 / -1',
+  minHeight: '30px',
+});
+
+export const highlightColorButton = style({
+  appearance: 'none',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '28px',
+  height: '28px',
+  padding: '3px',
+  borderRadius: '4px',
+  border: `1px solid ${themeVars.dynamicColors.divider}`,
+  background: 'transparent',
+  cursor: 'pointer',
+  selectors: {
+    '&:disabled': {
+      opacity: 0.35,
+      cursor: 'not-allowed',
+    },
+    '&:not(:disabled):hover': {
+      outline: '1px solid currentColor',
+    },
+    '&:focus-visible': {
+      outline: '2px solid currentColor',
+      outlineOffset: '2px',
+    },
+  },
+});
+
+export const highlightColorSwatch = style({
+  display: 'block',
+  width: '18px',
+  height: '18px',
+  borderRadius: '3px',
+  border: `1px solid ${themeVars.dynamicColors.divider}`,
 });

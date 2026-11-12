@@ -7,6 +7,7 @@ export function createTabIcon(
   tabName: Accessor<string | null>,
   editorLanguageId: Accessor<string>,
   defaultIfEmpty: boolean,
+  explicitIcon?: Accessor<string | undefined>,
 ) {
   const [icon, setIcon] = createSignal<LanguageIconDefinition | null>();
   const languages = SUPPORTED_LANGUAGES;
@@ -25,6 +26,13 @@ export function createTabIcon(
   };
 
   const currentIcon = () => {
+    const override = explicitIcon?.();
+    if (override) {
+      const icon = SUPPORTED_LANGUAGES.flatMap(language => language.icons).find(
+        item => item.extension === override,
+      );
+      if (icon) return icon;
+    }
     const tab = tabName();
     if (!tab) {
       return null;

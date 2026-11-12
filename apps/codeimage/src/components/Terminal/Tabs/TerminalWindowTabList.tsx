@@ -80,7 +80,7 @@ export function TerminalWindowTabListContent(
   }
 
   function handleTabNameChange(id: string, updatedName: string) {
-    setTabName(id, updatedName, true);
+    setTabName(id, updatedName);
   }
 
   return (
@@ -110,6 +110,7 @@ export function TerminalWindowTabListContent(
                       () => editor.tab.tabName ?? null,
                       () => editor.languageId,
                       true,
+                      () => editor.tab.tabIcon,
                     );
 
                     const active = () => isActive(editor.id);

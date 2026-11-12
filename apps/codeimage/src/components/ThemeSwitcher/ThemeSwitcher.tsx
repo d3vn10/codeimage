@@ -17,6 +17,7 @@ import type {AppLocaleEntries} from '../../i18n';
 import {TerminalHost} from '../Terminal/TerminalHost';
 import {ThemeBox} from './ThemeBox';
 import {ThemeBoxSkeleton} from './ThemeBoxSkeleton';
+import {CustomThemeCreator} from './CustomThemeCreator';
 import * as styles from './ThemeSwitcher.css';
 import type {ThemeSwitcherVariant} from './ThemeSwitcher.css';
 import {gridSize} from './ThemeSwitcher.css';
@@ -58,6 +59,7 @@ export const ThemeSwitcher: ParentComponent<ThemeSwitcherVariant> = props => {
       })}
     >
       <Show when={modality === 'full'} keyed={false}>
+        <CustomThemeCreator />
         <TextField
           disabled={themeLoading()}
           placeholder={t('themeSwitcher.search')}

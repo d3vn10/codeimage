@@ -1,17 +1,21 @@
-import {SUPPORTED_LANGUAGES} from '@codeimage/config';
 import {useI18n} from '@codeimage/locale';
 import {getRootEditorStore} from '@codeimage/store/editor';
 import {getUiStore} from '@codeimage/store/ui';
 import {toast} from '@codeimage/ui';
 import {appEnvironment} from '@core/configuration';
 import {clamp, isNonNullable} from '@solid-primitives/utils';
-import {createEffect, createMemo, createRoot, on} from 'solid-js';
+import {createEffect, createMemo, createRoot, createSignal, on} from 'solid-js';
+import {
+  applyColorToSelections,
+  mapColoredRangesThroughChanges,
+  mapColoredRangesThroughTextReplacement,
+} from './coloredRanges';
+import type {ColoredTextRange} from './model';
 import {createPrettierFormatter} from '../../hooks/createPrettierFormatter';
 import type {AppLocaleEntries} from '../../i18n';
 
 const $activeEditorState = () => {
   return createRoot(() => {
-    const languages = SUPPORTED_LANGUAGES;
     const {
       state,
       isActive,
@@ -23,22 +27,51 @@ const $activeEditorState = () => {
     const currentEditorIndex = () =>
       state.editors.findIndex(editor => editor.id === currentEditor()?.id);
 
+    const [selectionRanges, setCurrentSelectionRanges] = createSignal<
+      {from: number; to: number}[]
+    >([]);
+
+    const setSelectionRanges = (
+      ranges: readonly {from: number; to: number}[],
+    ) => setCurrentSelectionRanges(ranges.map(({from, to}) => ({from, to})));
+
+    const hasSelection = () =>
+      selectionRanges().some(range => range.to > range.from);
+
+    const setColoredRanges = (ranges: ColoredTextRange[]) => {
+      const index = currentEditorIndex();
+      if (index < 0) return;
+      setEditors(index, 'coloredRanges', ranges);
+    };
+
+    const applySyntaxCategoryToSelection = (category: string | null) => {
+      const current = currentEditor();
+      if (!current || !hasSelection()) return;
+      setColoredRanges(
+        applyColorToSelections(
+          current.coloredRanges ?? [],
+          selectionRanges(),
+          category,
+        ),
+      );
+    };
+
+    const mapColoredRanges = (
+      changes: readonly {
+        mapPos(position: number, association?: number): number;
+      }[],
+    ) => {
+      const current = currentEditor();
+      if (!current || !(current.coloredRanges ?? []).length) return;
+      setColoredRanges(
+        mapColoredRangesThroughChanges(current.coloredRanges, changes),
+      );
+    };
+
     const setLanguageId = (languageId: string) => {
       const currentLanguageId = currentEditor()?.languageId;
       setEditors(currentEditorIndex(), 'languageId', languageId);
       if (currentLanguageId !== languageId) {
-        const language = languages.find(language => language.id === languageId);
-        if (language) {
-          const tabName = currentEditor()?.tab?.tabName;
-          if (!language.icons.find(item => item.matcher.test(tabName ?? ''))) {
-            setEditors(currentEditorIndex(), 'tab', 'tabName', name =>
-              (name ?? 'index.tsx').replace(
-                /\.[^.]*$/,
-                language.icons[0].extension,
-              ),
-            );
-          }
-        }
         const defaultFormatter = formatter.availableFormatters()[0]?.parser;
         setEditors(currentEditorIndex(), 'formatter', defaultFormatter ?? null);
       }
@@ -77,6 +110,7 @@ const $activeEditorState = () => {
     let unsubscribe: (() => void) | undefined = undefined;
     createEffect(() => {
       const editor = currentEditorIndex();
+      setCurrentSelectionRanges([]);
       if (!!unsubscribe) unsubscribe();
       if (!isNonNullable(editor) || editor === -1) return;
       createRoot(dispose => {
@@ -98,6 +132,10 @@ const $activeEditorState = () => {
 
     return {
       editor: currentEditor,
+      setSelectionRanges,
+      hasSelection,
+      applySyntaxCategoryToSelection,
+      mapColoredRanges,
       setLanguageId,
       setCode,
       setLineNumberStart,
@@ -120,7 +158,15 @@ const $activeEditorState = () => {
               currentEditor()?.formatter ?? undefined,
             );
 
-            if (result !== currentEditor()?.code) {
+            const previousCode = currentEditor()?.code ?? '';
+            if (result !== previousCode) {
+              setColoredRanges(
+                mapColoredRangesThroughTextReplacement(
+                  currentEditor()?.coloredRanges ?? [],
+                  previousCode,
+                  result,
+                ),
+              );
               setCode(result);
               toast.success(
                 () => {
