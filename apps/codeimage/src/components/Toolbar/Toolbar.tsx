@@ -53,11 +53,6 @@ export function Toolbar(props: VoidProps<ToolbarProps>) {
           <div class={sidebarLogo}>
             <CodeImageLogoV2 height={26} withGradient={true} />
           </div>
-          <Show when={modality === 'full'} keyed={false}>
-            <HStack marginLeft={12} spacing={'2'}>
-              <LocalProjectButtons />
-            </HStack>
-          </Show>
           <Show when={loggedIn() && modality === 'full'}>
             <Box marginLeft={16}>
               <Link
@@ -84,6 +79,7 @@ export function Toolbar(props: VoidProps<ToolbarProps>) {
           <HStack marginLeft={'auto'} spacing={'2'}>
             <Show when={modality === 'full'} keyed={false}>
               <ShareButton showLabel={false} />
+              <LocalProjectButtons />
               <ExportButton canvasRef={props.canvasRef} />
             </Show>
           </HStack>
