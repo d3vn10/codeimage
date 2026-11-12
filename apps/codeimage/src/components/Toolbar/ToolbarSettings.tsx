@@ -15,7 +15,6 @@ import {Changelog} from '../Changelog/Changelog';
 import {MenuAlt2Icon} from '../Icons/DotVertical';
 import {ExternalLinkIcon} from '../Icons/ExternalLink';
 import {SettingsDialog} from './SettingsDialog';
-import {LocalProjectMenuItems} from './LocalProjectMenu';
 
 export function ToolbarSettingsButton() {
   const navigate = useNavigate();
@@ -35,7 +34,6 @@ export function ToolbarSettingsButton() {
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
         <DropdownMenuContent>
-          <LocalProjectMenuItems />
           <DropdownMenuItem
             onClick={() => openDialog(SettingsDialog, () => ({}))}
           >
