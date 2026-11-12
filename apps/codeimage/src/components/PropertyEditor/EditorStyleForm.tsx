@@ -60,6 +60,7 @@ export const EditorStyleForm: ParentComponent = () => {
       setEnableLigatures,
       setFontSize,
       setLineHeight,
+      setTabIcon,
     },
     computed: {selectedFont},
   } = getRootEditorStore();
@@ -73,6 +74,22 @@ export const EditorStyleForm: ParentComponent = () => {
       key: 'label',
       valueKey: 'value',
     },
+  );
+
+  const tabIconOptions = createSelectOptions(
+    [
+      {label: 'Automatic', value: ''},
+      ...SUPPORTED_LANGUAGES.flatMap(language => language.icons)
+        .filter(
+          (icon, index, icons) =>
+            icons.findIndex(item => item.extension === icon.extension) === index,
+        )
+        .map(icon => ({
+          label: `${icon.name} (${icon.extension})`,
+          value: icon.extension,
+        })),
+    ],
+    {key: 'label', valueKey: 'value'},
   );
 
   const syntaxHighlightOptions = createSelectOptions(
@@ -202,6 +219,23 @@ export const EditorStyleForm: ParentComponent = () => {
                     size={'xs'}
                   />
                 </SuspenseEditorItem>
+              </TwoColumnPanelRow>
+            </PanelRow>
+
+            <PanelRow for={'frameTabIconField'} label={'Tab icon'}>
+              <TwoColumnPanelRow>
+                {/* @ts-expect-error Fix @codeui/kit types */}
+                <Select
+                  {...tabIconOptions.props()}
+                  {...tabIconOptions.controlled(
+                    () => editor().tab.tabIcon ?? '',
+                    icon => setTabIcon(editor().id, icon ? (icon as string) : undefined),
+                  )}
+                  options={tabIconOptions.options()}
+                  aria-label={'Tab icon'}
+                  id={'frameTabIconField'}
+                  size={'xs'}
+                />
               </TwoColumnPanelRow>
             </PanelRow>
 
