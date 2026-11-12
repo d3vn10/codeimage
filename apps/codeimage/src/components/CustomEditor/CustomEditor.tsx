@@ -98,6 +98,7 @@ export default function CustomEditor(props: VoidProps<CustomEditorProps>) {
     () => editor()?.tab.tabName ?? null,
     () => editor()?.languageId ?? '',
     true,
+    () => editor()?.tab.tabIcon,
   );
 
   const [currentExtraLanguage] = createResource(icon, iconDef => {
