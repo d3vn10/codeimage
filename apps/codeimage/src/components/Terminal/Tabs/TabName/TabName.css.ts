@@ -103,7 +103,12 @@ export const tabText = style([
   },
 ]);
 
-export const control = style({});
+export const control = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  minWidth: 0,
+  position: 'relative',
+});
 
 export const inlineHiddenItem = style({
   visibility: 'hidden',
