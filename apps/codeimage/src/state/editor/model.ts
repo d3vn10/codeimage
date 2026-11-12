@@ -47,6 +47,7 @@ export interface PersistedEditorState {
     id: string;
     code: string;
     tabName: string;
+    tabIcon?: string;
     languageId: string;
     lineNumberStart: number;
     coloredRanges: ColoredTextRange[];
