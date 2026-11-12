@@ -1,5 +1,11 @@
 import type {Extension} from '@codemirror/state';
 
+export interface ManualHighlightColor {
+  id: string;
+  label: string;
+  color: string;
+}
+
 export interface TerminalTabsTheme {
   background?: string;
   activeTabBackground?: string;
@@ -39,6 +45,8 @@ export interface CustomThemeProperties {
    * @description MacOsTerminal theme properties
    */
   terminal: TerminalThemeProperties;
+  /** Optional manual text-color palette for themes without semantic highlight colors. */
+  highlightColors?: readonly ManualHighlightColor[];
 }
 
 export interface CustomTheme {

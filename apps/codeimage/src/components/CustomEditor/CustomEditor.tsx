@@ -1,5 +1,6 @@
 import {SUPPORTED_LANGUAGES} from '@codeimage/config';
 import {getRootEditorStore} from '@codeimage/store/editor';
+import {getEditorThemeHighlightColors} from '@codeimage/highlight';
 import {getActiveEditorStore} from '@codeimage/store/editor/activeEditor';
 import {getThemeStore} from '@codeimage/store/theme/theme.store';
 import {
@@ -16,7 +17,7 @@ import {
 } from '@codemirror/commands';
 import {bracketMatching, indentOnInput} from '@codemirror/language';
 import type {Extension} from '@codemirror/state';
-import {EditorState} from '@codemirror/state';
+import {EditorState, Transaction} from '@codemirror/state';
 import {
   crosshairCursor,
   drawSelection,
@@ -31,6 +32,7 @@ import {createCodeMirror, createEditorReadonly} from 'solid-codemirror';
 import type {VoidProps} from 'solid-js';
 import {createEffect, createMemo, createResource, on} from 'solid-js';
 import {createTabIcon} from '../../hooks/use-tab-icon';
+import {createManualHighlightExtension} from './manual-highlight';
 
 const EDITOR_BASE_SETUP: Extension = [
   highlightSpecialChars(),
@@ -67,7 +69,11 @@ export default function CustomEditor(props: VoidProps<CustomEditorProps>) {
     canvasEditorEvents,
     computed: {selectedFont},
   } = getRootEditorStore();
-  const {editor} = getActiveEditorStore();
+  const {
+    editor,
+    setSelectionRanges,
+    mapColoredRanges,
+  } = getActiveEditorStore();
   const selectedLanguage = createMemo(() =>
     languages.find(language => language.id === editor()?.languageId),
   );
@@ -197,6 +203,34 @@ export default function CustomEditor(props: VoidProps<CustomEditorProps>) {
       : [];
   });
   createExtension(() => themeConfiguration()?.editorTheme || []);
+  createExtension(() =>
+    createManualHighlightExtension(
+      editor()?.coloredRanges ?? [],
+      [
+        ...getEditorThemeHighlightColors(
+          themeConfiguration()?.editorTheme ?? [],
+        ),
+        ...(themeConfiguration()?.properties.highlightColors ?? []),
+      ],
+      editor()?.code.length ?? 0,
+    ),
+  );
+  createExtension(() =>
+    EditorView.updateListener.of(update => {
+      if (props.readOnly) return;
+      if (
+        update.docChanged &&
+        update.transactions.some(transaction =>
+          transaction.annotation(Transaction.userEvent),
+        )
+      ) {
+        mapColoredRanges([update.changes]);
+      }
+      if (update.selectionSet || update.docChanged) {
+        setSelectionRanges(update.state.selection.ranges);
+      }
+    }),
+  );
   createExtension(baseTheme);
 
   const reconfigureBaseSetup = createExtension(EDITOR_BASE_SETUP);

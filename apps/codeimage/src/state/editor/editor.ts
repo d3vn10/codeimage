@@ -23,6 +23,7 @@ export function getInitialEditorState(): EditorState {
     languageId: appEnvironment.defaultState.editor.languageId,
     formatter: null,
     lineNumberStart: 1,
+    coloredRanges: [],
     tab: {
       tabName: 'index.tsx',
       tabIcon: undefined,
@@ -106,6 +107,7 @@ export function createEditorsStore() {
           id: editor.id,
           code: editor.code,
           lineNumberStart: editor.lineNumberStart,
+          coloredRanges: editor.coloredRanges ?? [],
         }));
       return {
         options: {...state.options, ...persistedState.options},
@@ -117,6 +119,7 @@ export function createEditorsStore() {
             tab: {tabName: editor.tabName},
             id: editor.id,
             lineNumberStart: editor.lineNumberStart,
+            coloredRanges: editor.coloredRanges ?? [],
           };
         }),
       };
@@ -140,6 +143,7 @@ export function createEditorsStore() {
           tabName: editor.tab.tabName ?? '',
           id: editor.id,
           lineNumberStart: editor.lineNumberStart ?? 1,
+          coloredRanges: editor.coloredRanges ?? [],
         };
       }),
       options: {
@@ -250,6 +254,7 @@ export function createEditorsStore() {
             id: editor.id,
             code: editor.code,
             lineNumberStart: editor.lineNumberStart ?? 1,
+            coloredRanges: editor.coloredRanges ?? [],
           }) as EditorState,
       ),
     );

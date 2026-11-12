@@ -1,4 +1,4 @@
-import type {PrismaClient, Project} from '@codeimage/prisma-models';
+import type {Prisma, PrismaClient, Project} from '@codeimage/prisma-models';
 import {
   type PartialProjectGetByIdResponse,
   type ProjectCreateRequest,
@@ -61,11 +61,11 @@ export function makePrismaProjectRepository(
     });
   }
 
-  function createNewProject(
+  async function createNewProject(
     ownerId: string,
     data: ProjectCreateRequest,
   ): Promise<ProjectCreateResponse> {
-    return client.project.create({
+    const project = await client.project.create({
       data: {
         name: data.name,
         owner: {
@@ -73,7 +73,10 @@ export function makePrismaProjectRepository(
         },
         editorTabs: {
           createMany: {
-            data: data.editors,
+            data: data.editors.map(editor => ({
+              ...editor,
+              coloredRanges: editor.coloredRanges as Prisma.InputJsonValue,
+            })),
           },
         },
         editorOptions: {
@@ -116,6 +119,13 @@ export function makePrismaProjectRepository(
         terminal: true,
       },
     });
+    return {
+      ...project,
+      editorTabs: project.editorTabs.map(editor => ({
+        ...editor,
+        coloredRanges: editor.coloredRanges as {from: number; to: number; color: string}[],
+      })),
+    };
   }
 
   async function updateProject(
@@ -123,7 +133,7 @@ export function makePrismaProjectRepository(
     projectId: string,
     data: ProjectUpdateRequest,
   ): Promise<ProjectUpdateResponse> {
-    return client.project.update({
+    const project = await client.project.update({
       where: {
         id: projectId,
       },
@@ -139,7 +149,7 @@ export function makePrismaProjectRepository(
             },
           },
           upsert: data.editors.map(editor => {
-            const {languageId, code, tabName, lineNumberStart, id} = editor;
+            const {languageId, code, tabName, lineNumberStart, coloredRanges, id} = editor;
             return {
               where: {
                 id,
@@ -149,12 +159,14 @@ export function makePrismaProjectRepository(
                 tabName,
                 languageId,
                 lineNumberStart,
+                coloredRanges: coloredRanges as Prisma.InputJsonValue,
               },
               update: {
                 code,
                 tabName,
                 languageId,
                 lineNumberStart,
+                coloredRanges: coloredRanges as Prisma.InputJsonValue,
               },
             };
           }),
@@ -200,6 +212,13 @@ export function makePrismaProjectRepository(
         terminal: true,
       },
     });
+    return {
+      ...project,
+      editorTabs: project.editorTabs.map(editor => ({
+        ...editor,
+        coloredRanges: editor.coloredRanges as {from: number; to: number; color: string}[],
+      })),
+    };
   }
 
   async function updateProjectName(projectId: string, name: string) {

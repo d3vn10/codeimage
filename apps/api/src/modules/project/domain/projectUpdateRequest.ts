@@ -14,6 +14,7 @@ interface EditorUpdateRequest {
   languageId: NonNullable<SnippetEditorTab['languageId']>;
   tabName: NonNullable<SnippetEditorTab['tabName']>;
   lineNumberStart: NonNullable<SnippetEditorTab['lineNumberStart']>;
+  coloredRanges: {from: number; to: number; color: string}[];
 }
 
 interface EditorTabResponse {
@@ -22,6 +23,7 @@ interface EditorTabResponse {
   languageId: NonNullable<SnippetEditorTab['languageId']>;
   tabName: NonNullable<SnippetEditorTab['tabName']>;
   lineNumberStart: NonNullable<SnippetEditorTab['lineNumberStart']>;
+  coloredRanges: {from: number; to: number; color: string}[];
 }
 
 export interface ProjectUpdateRequest {

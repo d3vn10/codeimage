@@ -1,24 +1,30 @@
 import {SUPPORTED_LANGUAGES} from '@codeimage/config';
 import type {LanguageDefinition} from '@codeimage/config';
+import {getEditorThemeHighlightColors} from '@codeimage/highlight';
 import type {CustomTheme} from '@codeimage/highlight';
 import {useI18n} from '@codeimage/locale';
 import {getRootEditorStore} from '@codeimage/store/editor';
 import {getActiveEditorStore} from '@codeimage/store/editor/activeEditor';
 import {dispatchUpdateTheme} from '@codeimage/store/effects/onThemeChange';
 import {getThemeStore} from '@codeimage/store/theme/theme.store';
-import {createSelectOptions, NumberField, Select} from '@codeui/kit';
+import {Button, createSelectOptions, NumberField, Select} from '@codeui/kit';
 import {appEnvironment} from '@core/configuration';
 import {getUmami} from '@core/constants/umami';
 import {DynamicSizedContainer} from '@ui/DynamicSizedContainer/DynamicSizedContainer';
 import {SegmentedField} from '@ui/SegmentedField/SegmentedField';
 import {SkeletonLine} from '@ui/Skeleton/Skeleton';
 import type {ParentComponent} from 'solid-js';
-import {Show} from 'solid-js';
+import {createMemo, createSignal, For, Show} from 'solid-js';
 import type {AppLocaleEntries} from '../../i18n';
 import {FontPicker} from './controls/FontPicker/FontPicker';
 import {PanelDivider} from './PanelDivider';
 import {PanelHeader} from './PanelHeader';
 import {PanelRow, TwoColumnPanelRow} from './PanelRow';
+import {
+  highlightColorButton,
+  highlightColorSwatch,
+  highlightPalette,
+} from './EditorSidebar.css';
 import {SuspenseEditorItem} from './SuspenseEditorItem';
 
 const languages: readonly LanguageDefinition[] = [...SUPPORTED_LANGUAGES].sort(
@@ -37,6 +43,7 @@ const languages: readonly LanguageDefinition[] = [...SUPPORTED_LANGUAGES].sort(
 
 export const EditorStyleForm: ParentComponent = () => {
   const {themeArray} = getThemeStore();
+  const [manualColoringEnabled, setManualColoringEnabled] = createSignal(false);
   const {lineNumbers: lineNumbersConfig} = appEnvironment;
   const [t] = useI18n<AppLocaleEntries>();
   const {
@@ -45,6 +52,8 @@ export const EditorStyleForm: ParentComponent = () => {
     formatter,
     setFormatterName,
     setLineNumberStart,
+    hasSelection,
+    applyColorToSelection,
   } = getActiveEditorStore();
   const {
     state,
@@ -76,6 +85,18 @@ export const EditorStyleForm: ParentComponent = () => {
         }),
     {key: 'label', valueKey: 'value'},
   );
+
+  const manualHighlightColors = createMemo(() => {
+    const theme =
+      themeArray().find(item => item()?.id === state.options.themeId)?.() ??
+      themeArray()[0]?.();
+    if (!theme) return [];
+    const colors = [
+      ...getEditorThemeHighlightColors(theme.editorTheme),
+      ...(theme.properties.highlightColors ?? []),
+    ];
+    return colors;
+  });
 
   const languageFormatterOptions = createSelectOptions(
     () =>
@@ -163,6 +184,62 @@ export const EditorStyleForm: ParentComponent = () => {
                 </SuspenseEditorItem>
               </TwoColumnPanelRow>
             </PanelRow>
+
+            <PanelRow for={'manualTextColoringToggle'} label={'Manual text colors'}>
+              <TwoColumnPanelRow>
+                <Button
+                  id={'manualTextColoringToggle'}
+                  size={'xs'}
+                  theme={'secondary'}
+                  block
+                  onClick={() => setManualColoringEnabled(enabled => !enabled)}
+                  aria-pressed={manualColoringEnabled()}
+                >
+                  {manualColoringEnabled() ? 'Disable coloring' : 'Enable coloring'}
+                </Button>
+              </TwoColumnPanelRow>
+            </PanelRow>
+
+            <Show when={manualColoringEnabled()}>
+              <PanelRow for={'manualTextColorPalette'} label={'Color selection'}>
+                <div class={highlightPalette} id={'manualTextColorPalette'}>
+                  <For each={manualHighlightColors()}>
+                    {color => (
+                      <button
+                        type={'button'}
+                        class={highlightColorButton}
+                        title={color.label}
+                        aria-label={color.label}
+                        disabled={!hasSelection()}
+                        onClick={() => applyColorToSelection(color.id)}
+                      >
+                        <span
+                          class={highlightColorSwatch}
+                          style={{background: color.color}}
+                        />
+                      </button>
+                    )}
+                  </For>
+                  <button
+                    type={'button'}
+                    class={highlightColorButton}
+                    title={'Clear color'}
+                    aria-label={'Clear color'}
+                    disabled={!hasSelection()}
+                    onClick={() => applyColorToSelection(null)}
+                  >
+                    <span class={highlightColorSwatch} />
+                  </button>
+                </div>
+              </PanelRow>
+              <Show when={!manualHighlightColors().length}>
+                <PanelRow for={'manualTextColorUnavailable'} label={'Palette'}>
+                  <TwoColumnPanelRow>
+                    <span>No manual text colors are available for this theme.</span>
+                  </TwoColumnPanelRow>
+                </PanelRow>
+              </Show>
+            </Show>
 
             <Show
               when={formatter.availableFormatters().length > 0}

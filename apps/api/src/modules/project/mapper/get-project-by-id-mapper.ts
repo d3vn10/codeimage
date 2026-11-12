@@ -47,6 +47,7 @@ export function createCompleteProjectGetByIdResponseMapper(
       code: editor.code,
       tabName: editor.tabName,
       lineNumberStart: editor.lineNumberStart,
+      coloredRanges: editor.coloredRanges as {from: number; to: number; color: string}[],
     })),
     isOwner: false,
   };

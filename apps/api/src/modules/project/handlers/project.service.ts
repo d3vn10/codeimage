@@ -94,7 +94,15 @@ export function makeProjectService(
         return this.createNewProject(user.id, {
           name: newName ?? project.name,
           frame: project.frame,
-          editors: project.editorTabs,
+          editors: project.editorTabs.map(editor => ({
+            code: editor.code,
+            languageId: editor.languageId,
+            tabName: editor.tabName,
+            lineNumberStart: editor.lineNumberStart,
+            coloredRanges: Array.isArray(editor.coloredRanges)
+              ? (editor.coloredRanges as {from: number; to: number; color: string}[])
+              : [],
+          })),
           editorOptions: project.editorOptions,
           terminal: project.terminal,
         });

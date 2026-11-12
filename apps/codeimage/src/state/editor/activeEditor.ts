@@ -5,7 +5,13 @@ import {getUiStore} from '@codeimage/store/ui';
 import {toast} from '@codeimage/ui';
 import {appEnvironment} from '@core/configuration';
 import {clamp, isNonNullable} from '@solid-primitives/utils';
-import {createEffect, createMemo, createRoot, on} from 'solid-js';
+import {createEffect, createMemo, createRoot, createSignal, on} from 'solid-js';
+import {
+  applyColorToSelections,
+  mapColoredRangesThroughChanges,
+  mapColoredRangesThroughTextReplacement,
+} from './coloredRanges';
+import type {ColoredTextRange} from './model';
 import {createPrettierFormatter} from '../../hooks/createPrettierFormatter';
 import type {AppLocaleEntries} from '../../i18n';
 
@@ -22,6 +28,43 @@ const $activeEditorState = () => {
 
     const currentEditorIndex = () =>
       state.editors.findIndex(editor => editor.id === currentEditor()?.id);
+
+    const [selectionRanges, setCurrentSelectionRanges] = createSignal<
+      {from: number; to: number}[]
+    >([]);
+
+    const setSelectionRanges = (
+      ranges: readonly {from: number; to: number}[],
+    ) => setCurrentSelectionRanges(ranges.map(({from, to}) => ({from, to})));
+
+    const hasSelection = () =>
+      selectionRanges().some(range => range.to > range.from);
+
+    const setColoredRanges = (ranges: ColoredTextRange[]) => {
+      const index = currentEditorIndex();
+      if (index < 0) return;
+      setEditors(index, 'coloredRanges', ranges);
+    };
+
+    const applyColorToSelection = (color: string | null) => {
+      const current = currentEditor();
+      if (!current || !hasSelection()) return;
+      setColoredRanges(
+        applyColorToSelections(current.coloredRanges ?? [], selectionRanges(), color),
+      );
+    };
+
+    const mapColoredRanges = (
+      changes: readonly {
+        mapPos(position: number, association?: number): number;
+      }[],
+    ) => {
+      const current = currentEditor();
+      if (!current || !(current.coloredRanges ?? []).length) return;
+      setColoredRanges(
+        mapColoredRangesThroughChanges(current.coloredRanges, changes),
+      );
+    };
 
     const setLanguageId = (languageId: string) => {
       const currentLanguageId = currentEditor()?.languageId;
@@ -77,6 +120,7 @@ const $activeEditorState = () => {
     let unsubscribe: (() => void) | undefined = undefined;
     createEffect(() => {
       const editor = currentEditorIndex();
+      setCurrentSelectionRanges([]);
       if (!!unsubscribe) unsubscribe();
       if (!isNonNullable(editor) || editor === -1) return;
       createRoot(dispose => {
@@ -98,6 +142,10 @@ const $activeEditorState = () => {
 
     return {
       editor: currentEditor,
+      setSelectionRanges,
+      hasSelection,
+      applyColorToSelection,
+      mapColoredRanges,
       setLanguageId,
       setCode,
       setLineNumberStart,
@@ -120,7 +168,15 @@ const $activeEditorState = () => {
               currentEditor()?.formatter ?? undefined,
             );
 
-            if (result !== currentEditor()?.code) {
+            const previousCode = currentEditor()?.code ?? '';
+            if (result !== previousCode) {
+              setColoredRanges(
+                mapColoredRangesThroughTextReplacement(
+                  currentEditor()?.coloredRanges ?? [],
+                  previousCode,
+                  result,
+                ),
+              );
               setCode(result);
               toast.success(
                 () => {

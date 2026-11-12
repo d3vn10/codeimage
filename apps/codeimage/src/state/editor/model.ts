@@ -8,6 +8,12 @@ export interface EditorUIOptions {
   themeId: string;
 }
 
+export interface ColoredTextRange {
+  from: number;
+  to: number;
+  color: string;
+}
+
 export interface TabState {
   tabName: string | null;
   tabIcon?: string;
@@ -20,6 +26,7 @@ export interface EditorState {
   formatter?: string | null;
   languageId: string;
   lineNumberStart: number;
+  coloredRanges: ColoredTextRange[];
 }
 
 export interface EditorUIOptions {
@@ -39,6 +46,7 @@ export interface PersistedEditorState {
     tabName: string;
     languageId: string;
     lineNumberStart: number;
+    coloredRanges: ColoredTextRange[];
   }[];
 }
 
