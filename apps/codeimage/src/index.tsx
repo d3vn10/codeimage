@@ -9,7 +9,7 @@ import type { ThemeProviderProps } from "@codeimage/ui";
 import { backgroundColorVar, CodeImageThemeProvider, SnackbarHost } from "@codeimage/ui";
 import "@codeimage/ui/themes/lightTheme";
 import { appEnvironment } from "@core/configuration";
-import { Router, Navigate, type RouteDefinition } from "@solidjs/router";
+import { HashRouter, Router, Navigate, type RouteDefinition } from "@solidjs/router";
 import { snackbarHostAppStyleCss } from "@ui/snackbarHostAppStyle.css";
 import { setElementVars } from "@vanilla-extract/dynamic";
 import type { Component } from "solid-js";
@@ -26,6 +26,7 @@ import "./theme/global.css";
 console.debug("💻 CodeImage version:", appEnvironment.version);
 
 const i18n = createI18nContext(locale);
+const isDesktop = import.meta.env.MODE === "desktop";
 
 if (import.meta.env.VITE_ENABLE_MSW === true) {
   import("./mocks/browser").then(({ worker }) => worker.start());
@@ -79,6 +80,7 @@ export function Bootstrap() {
     {
       path: "",
       component: () => {
+        if (isDesktop) return <Editor />;
         const state = getAuth0State();
         return (
           <Show fallback={<Editor />} when={state.loggedIn()}>
@@ -133,15 +135,18 @@ export function Bootstrap() {
     <Scaffold>
       <CodeImageThemeProvider tokens={tokens} theme={mode()}>
         <SnackbarHost containerClassName={snackbarHostAppStyleCss} />
-        <Router>{routes}</Router>
+        {isDesktop ? (
+          <HashRouter>{routes}</HashRouter>
+        ) : (
+          <Router>{routes}</Router>
+        )}
       </CodeImageThemeProvider>
       <SidebarPopoverHost />
     </Scaffold>
   );
 }
 
-getAuth0State()
-  .initLogin()
+(isDesktop ? Promise.resolve() : getAuth0State().initLogin())
   .catch(() => null)
   .then(() => {
     render(
