@@ -42,8 +42,18 @@ function $getThemeStore() {
     customThemeResources().find(item => item.id === themeId)?.resource ??
     themes[Object.keys(themes)[0]];
 
-  const getThemeDef = (id: string) =>
-    THEME_REGISTRY.find(theme => theme.id === id);
+  const getThemeDef = (id: string) => {
+    const registeredTheme = THEME_REGISTRY.find(theme => theme.id === id);
+    if (registeredTheme) return registeredTheme;
+
+    const customDefinition = customThemeDefinitions().find(theme => theme.id === id);
+    if (!customDefinition) return undefined;
+
+    return {
+      id: customDefinition.id,
+      load: () => Promise.resolve(buildCustomTheme(customDefinition)),
+    };
+  };
 
   const loadThemes = () => setLoaded(true);
 
