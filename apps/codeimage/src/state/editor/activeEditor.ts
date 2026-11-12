@@ -74,18 +74,6 @@ const $activeEditorState = () => {
       const currentLanguageId = currentEditor()?.languageId;
       setEditors(currentEditorIndex(), 'languageId', languageId);
       if (currentLanguageId !== languageId) {
-        const language = languages.find(language => language.id === languageId);
-        if (language) {
-          const tabName = currentEditor()?.tab?.tabName;
-          if (!language.icons.find(item => item.matcher.test(tabName ?? ''))) {
-            setEditors(currentEditorIndex(), 'tab', 'tabName', name =>
-              (name ?? 'index.tsx').replace(
-                /\.[^.]*$/,
-                language.icons[0].extension,
-              ),
-            );
-          }
-        }
         const defaultFormatter = formatter.availableFormatters()[0]?.parser;
         setEditors(currentEditorIndex(), 'formatter', defaultFormatter ?? null);
       }
