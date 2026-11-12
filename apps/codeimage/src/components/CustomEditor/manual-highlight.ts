@@ -18,7 +18,7 @@ export function createManualHighlightExtension(
   categories.forEach(({id, color}) => colorByCategory.set(id, color));
 
   const marks = normalizeColoredRanges(ranges).flatMap(range => {
-    // `range.color` stores a syntax category ID for persisted-state compatibility.
+    // `range.color` stores the category ID for saved-project compatibility.
     const color = colorByCategory.get(range.color);
     const from = Math.max(0, Math.min(range.from, documentLength));
     const to = Math.max(0, Math.min(range.to, documentLength));
