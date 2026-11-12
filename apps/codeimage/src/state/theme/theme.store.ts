@@ -1,5 +1,7 @@
 import type {CustomTheme} from '@codeimage/highlight';
 import {THEME_REGISTRY} from '@codeimage/store/theme/themeRegistry';
+import {buildCustomTheme, readCustomThemeDefinitions, writeCustomThemeDefinitions} from '@codeimage/store/theme/customTheme';
+import type {CustomThemeDefinition} from '@codeimage/store/theme/customTheme';
 import type {ResourceReturn} from 'solid-js';
 import {
   createMemo,
@@ -11,6 +13,7 @@ import {
 
 function $getThemeStore() {
   const [loaded, setLoaded] = createSignal(false, {equals: false});
+  const [customThemeDefinitions, setCustomThemeDefinitions] = createSignal(readCustomThemeDefinitions());
 
   const themes = Object.fromEntries(
     Object.values(THEME_REGISTRY).map(
@@ -18,8 +21,15 @@ function $getThemeStore() {
     ),
   );
 
+  const [customThemeResources, setCustomThemeResources] = createSignal(
+    customThemeDefinitions().map(definition => ({
+      id: definition.id,
+      resource: createResource(loaded, () => Promise.resolve(buildCustomTheme(definition))),
+    })),
+  );
+
   const themeArray = mapArray(
-    () => Object.values(themes),
+    () => [...Object.values(themes), ...customThemeResources().map(item => item.resource)],
     ([theme]) => theme,
   );
 
@@ -28,12 +38,25 @@ function $getThemeStore() {
   );
 
   const getThemeResource = (themeId: string): ResourceReturn<CustomTheme> =>
-    themes[themeId];
+    themes[themeId] ??
+    customThemeResources().find(item => item.id === themeId)?.resource ??
+    themes[Object.keys(themes)[0]];
 
   const getThemeDef = (id: string) =>
     THEME_REGISTRY.find(theme => theme.id === id);
 
   const loadThemes = () => setLoaded(true);
+
+  const addCustomTheme = (definition: CustomThemeDefinition) => {
+    const next = [...customThemeDefinitions().filter(item => item.id !== definition.id), definition];
+    setCustomThemeDefinitions(next);
+    writeCustomThemeDefinitions(next);
+    const resource = createResource(loaded, () => Promise.resolve(buildCustomTheme(definition)));
+    setCustomThemeResources(items => [
+      ...items.filter(item => item.id !== definition.id),
+      {id: definition.id, resource},
+    ]);
+  };
 
   return {
     themeResources: themes,
@@ -41,6 +64,8 @@ function $getThemeStore() {
     themeLoading,
     getThemeDef,
     getThemeResource,
+    customThemeDefinitions,
+    addCustomTheme,
     loadThemes,
   } as const;
 }
