@@ -46,7 +46,10 @@ export interface CustomThemeProperties {
    * @description MacOsTerminal theme properties
    */
   terminal: TerminalThemeProperties;
-  /** Optional syntax-category colors for themes without semantic highlight styles. */
+  /**
+   * Optional syntax-category colors for themes without semantic highlight
+   * styles.
+   */
   highlightColors?: readonly ManualHighlightColor[];
 }
 
