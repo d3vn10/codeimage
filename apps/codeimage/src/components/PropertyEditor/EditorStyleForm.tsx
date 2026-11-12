@@ -53,7 +53,14 @@ export const EditorStyleForm: ParentComponent = () => {
   } = getActiveEditorStore();
   const {
     state,
-    actions: {setShowLineNumbers, setFontWeight, setFontId, setEnableLigatures},
+    actions: {
+      setShowLineNumbers,
+      setFontWeight,
+      setFontId,
+      setEnableLigatures,
+      setFontSize,
+      setLineHeight,
+    },
     computed: {selectedFont},
   } = getRootEditorStore();
 
@@ -437,6 +444,34 @@ export const EditorStyleForm: ParentComponent = () => {
                     size={'xs'}
                   />
                 </SuspenseEditorItem>
+              </TwoColumnPanelRow>
+            </PanelRow>
+
+            <PanelRow for={'frameFontSizeField'} label={'Font size'}>
+              <TwoColumnPanelRow>
+                <NumberField
+                  size={'xs'}
+                  id={'frameFontSizeField'}
+                  min={8}
+                  max={48}
+                  step={1}
+                  value={state.options.fontSize ?? 14}
+                  onChange={value => setFontSize(value)}
+                />
+              </TwoColumnPanelRow>
+            </PanelRow>
+
+            <PanelRow for={'frameLineHeightField'} label={'Line spacing'}>
+              <TwoColumnPanelRow>
+                <NumberField
+                  size={'xs'}
+                  id={'frameLineHeightField'}
+                  min={1}
+                  max={3}
+                  step={0.1}
+                  value={state.options.lineHeight ?? 1.5}
+                  onChange={value => setLineHeight(value)}
+                />
               </TwoColumnPanelRow>
             </PanelRow>
 
