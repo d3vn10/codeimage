@@ -33,7 +33,11 @@ export function LocalProjectMenuItems() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'untitled.codeimage';
+    const tabName =
+      project.editor.editors[0]?.tabName?.replace(/\\.[^.]+$/, '') ||
+      'untitled';
+    const safeName = tabName.replace(/[<>:"/\\\\|?*]/g, '_');
+    link.download = `${safeName}.codeimage`;
     link.click();
     URL.revokeObjectURL(url);
   }
