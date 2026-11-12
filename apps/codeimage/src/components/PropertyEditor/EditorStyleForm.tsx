@@ -270,6 +270,17 @@ export const EditorStyleForm: ParentComponent = () => {
                             setSelectedManualCategory(category as string),
                         )}
                         options={manualHighlightCategoryOptions.options()}
+                        itemLabel={option => {
+                          const item = option as {label: string; value: string};
+                          const color = manualHighlightCategories().find(
+                            category => category.id === item.value,
+                          )?.color;
+                          return (
+                            <span style={{color: color || 'inherit'}}>
+                              {item.label}
+                            </span>
+                          );
+                        }}
                         aria-label={'Syntax category'}
                         id={'manualSyntaxCategoryField'}
                         size={'xs'}
@@ -501,8 +512,9 @@ export const EditorStyleForm: ParentComponent = () => {
                   size={'xs'}
                   id={'frameLineHeightField'}
                   min={1}
-                  max={3}
+                  max={1.5}
                   step={0.1}
+                  precision={1}
                   value={state.options.lineHeight ?? 1.5}
                   onChange={value => setLineHeight(value)}
                 />
