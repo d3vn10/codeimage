@@ -39,6 +39,8 @@ export function getInitialEditorUiOptions(): EditorUIOptions {
     fontWeight: appEnvironment.defaultState.editor.font.types[0].weight,
     focused: false,
     enableLigatures: true,
+    fontSize: 14,
+    lineHeight: 1.5,
   };
 }
 
@@ -60,6 +62,8 @@ export function createEditorsStore() {
       setFromPersistedState: PersistedEditorState;
       setFromPreset: PresetData['editor'];
       setEnableLigatures: boolean;
+      setFontSize: number;
+      setLineHeight: number;
     }>(),
   );
 
@@ -93,6 +97,12 @@ export function createEditorsStore() {
     )
     .hold(store.commands.setEnableLigatures, (enable, {set}) =>
       set('options', 'enableLigatures', enable),
+    )
+    .hold(store.commands.setFontSize, (fontSize, {set}) =>
+      set('options', 'fontSize', fontSize),
+    )
+    .hold(store.commands.setLineHeight, (lineHeight, {set}) =>
+      set('options', 'lineHeight', lineHeight),
     )
     .hold(store.commands.setFromPreset, presetData => {
       store.set('options', presetData);
@@ -152,6 +162,8 @@ export function createEditorsStore() {
         fontId: state.options.fontId,
         fontWeight: state.options.fontWeight,
         enableLigatures: state.options.enableLigatures ?? true,
+        fontSize: state.options.fontSize ?? 14,
+        lineHeight: state.options.lineHeight ?? 1.5,
       },
     };
   };
@@ -163,6 +175,8 @@ export function createEditorsStore() {
       store.commands.setFontWeight,
       store.commands.setShowLineNumbers,
       store.commands.setEnableLigatures,
+      store.commands.setFontSize,
+      store.commands.setLineHeight,
       editorUpdateCommand,
     ]),
   ).pipe(
