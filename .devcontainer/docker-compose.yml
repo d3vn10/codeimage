@@ -1,0 +1,27 @@
+services:
+  workspace:
+    image: mcr.microsoft.com/devcontainers/typescript-node:1-24-bookworm
+    command: sleep infinity
+    init: true
+    working_dir: /workspaces/codeimage
+    volumes:
+      - ..:/workspaces:cached
+    depends_on:
+      db:
+        condition: service_healthy
+      test_db:
+        condition: service_healthy
+
+  db:
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d codeimage"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  test_db:
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d codeimage_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
