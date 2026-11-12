@@ -46,11 +46,11 @@ const $activeEditorState = () => {
       setEditors(index, 'coloredRanges', ranges);
     };
 
-    const applyColorToSelection = (color: string | null) => {
+    const applySyntaxCategoryToSelection = (category: string | null) => {
       const current = currentEditor();
       if (!current || !hasSelection()) return;
       setColoredRanges(
-        applyColorToSelections(current.coloredRanges ?? [], selectionRanges(), color),
+        applyColorToSelections(current.coloredRanges ?? [], selectionRanges(), category),
       );
     };
 
@@ -144,7 +144,7 @@ const $activeEditorState = () => {
       editor: currentEditor,
       setSelectionRanges,
       hasSelection,
-      applyColorToSelection,
+      applySyntaxCategoryToSelection,
       mapColoredRanges,
       setLanguageId,
       setCode,
