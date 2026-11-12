@@ -22,6 +22,7 @@ export const sidebar = recipe({
       overflowY: 'auto',
       overflowX: 'hidden',
       paddingRight: themeVars.spacing['2'],
+      paddingBottom: themeVars.spacing['6'],
       '@supports': {
         '(scrollbar-gutter: stable)': {
           paddingRight: 0,
