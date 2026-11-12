@@ -62,7 +62,6 @@ export const [SUPPORTED_FONTS, SUPPORTED_FONTS_DICTIONARY] = createCustomFonts([
       {name: 'Regular', weight: 400},
       {name: 'Retina', weight: 500},
       {name: 'Bold', weight: 700},
-      {name: 'Italic', weight: 400},
     ],
   },
   {
