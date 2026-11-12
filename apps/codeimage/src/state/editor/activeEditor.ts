@@ -50,7 +50,11 @@ const $activeEditorState = () => {
       const current = currentEditor();
       if (!current || !hasSelection()) return;
       setColoredRanges(
-        applyColorToSelections(current.coloredRanges ?? [], selectionRanges(), category),
+        applyColorToSelections(
+          current.coloredRanges ?? [],
+          selectionRanges(),
+          category,
+        ),
       );
     };
 
