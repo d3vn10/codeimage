@@ -1,7 +1,7 @@
 import {getEditorStore} from '@codeimage/store/editor';
 import type {ProjectEditorPersistedState} from '@codeimage/store/editor/model';
+import {DropdownMenuItem} from '@codeui/kit';
 import {appEnvironment} from '@core/configuration';
-import {createSignal} from 'solid-js';
 
 function isProjectFile(value: unknown): value is ProjectEditorPersistedState {
   if (!value || typeof value !== 'object') return false;
@@ -16,7 +16,7 @@ function isProjectFile(value: unknown): value is ProjectEditorPersistedState {
 }
 
 export function LocalProjectMenuItems() {
-  const [fileInput, setFileInput] = createSignal<HTMLInputElement>();
+  let fileInput!: HTMLInputElement;
 
   function saveProject() {
     const store = getEditorStore();
@@ -55,24 +55,22 @@ export function LocalProjectMenuItems() {
         'This file is not a valid CodeImage project or could not be opened.',
       );
     } finally {
-      if (fileInput()) fileInput()!.value = '';
+      fileInput.value = '';
     }
   }
 
   return (
     <>
+      <DropdownMenuItem onClick={saveProject}>Save project</DropdownMenuItem>
+      <DropdownMenuItem onClick={() => fileInput.click()}>
+        Open project
+      </DropdownMenuItem>
       <input
-        ref={setFileInput}
+        ref={fileInput}
         type="file"
         accept=".codeimage,application/json"
         hidden
         onChange={event => void openProject(event.currentTarget.files?.[0])}
-      />
-      <button
-        type="button"
-        onClick={() => fileInput()?.click()}
-        style={{display: 'none'}}
-        aria-hidden="true"
       />
     </>
   );
