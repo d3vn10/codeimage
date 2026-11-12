@@ -63,7 +63,9 @@ const config: UserConfigExport = defineConfig(({mode}) => ({
         }, {});
       },
     },
-    withStaticVercelPreview() as unknown as Plugin,
+    ...(mode === 'desktop'
+      ? []
+      : [withStaticVercelPreview() as unknown as Plugin]),
   ],
   server: {
     strictPort: true,
