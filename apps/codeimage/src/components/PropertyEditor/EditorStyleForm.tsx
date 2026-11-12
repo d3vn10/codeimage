@@ -90,7 +90,7 @@ export const EditorStyleForm: ParentComponent = () => {
       ...getEditorThemeHighlightColors(theme.editorTheme),
       ...(theme.properties.highlightColors ?? []),
     ];
-    return [...new Map(categories.map(category => [category.id, category])).values()];
+    return categories;
   });
 
   const manualHighlightCategoryOptions = createSelectOptions(
