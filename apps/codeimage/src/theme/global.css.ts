@@ -69,6 +69,22 @@ globalFontFace('Geist Mono', {
   });
 });
 
+(
+  [
+    ['Regular', 400, 'normal'],
+    ['Retina', 500, 'normal'],
+    ['Bold', 700, 'normal'],
+    ['Italic', 400, 'italic'],
+  ] as const
+).forEach(([font, weight, fontStyle]) => {
+  globalFontFace('Monoid', {
+    fontDisplay: 'swap',
+    fontWeight: weight,
+    fontStyle,
+    src: `url(/assets/fonts/Monoid/Monoid-${font}.ttf) format('truetype')`,
+  });
+});
+
 globalFontFace('Agave', {
   fontDisplay: 'swap',
   fontWeight: 400,
