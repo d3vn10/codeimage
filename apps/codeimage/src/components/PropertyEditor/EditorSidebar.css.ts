@@ -12,6 +12,8 @@ export const sidebar = style([
   sidebarTheme,
   {
     paddingLeft: sidebarVars.gap,
+    paddingBottom: themeVars.spacing['8'],
+    boxSizing: 'border-box',
   },
 ]);
 
