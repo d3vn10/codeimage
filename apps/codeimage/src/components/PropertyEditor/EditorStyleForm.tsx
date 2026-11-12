@@ -48,7 +48,7 @@ export const EditorStyleForm: ParentComponent = () => {
     setFormatterName,
     setLineNumberStart,
     hasSelection,
-    applyColorToSelection,
+    applySyntaxCategoryToSelection,
   } = getActiveEditorStore();
   const {
     state,
@@ -245,7 +245,7 @@ export const EditorStyleForm: ParentComponent = () => {
                       theme={'secondary'}
                       block
                       disabled={!hasSelection() || !activeManualCategory()}
-                      onClick={() => applyColorToSelection(activeManualCategory())}
+                      onClick={() => applySyntaxCategoryToSelection(activeManualCategory())}
                     >
                       Apply category
                     </Button>
@@ -263,7 +263,7 @@ export const EditorStyleForm: ParentComponent = () => {
                       theme={'secondary'}
                       block
                       disabled={!hasSelection()}
-                      onClick={() => applyColorToSelection(null)}
+                      onClick={() => applySyntaxCategoryToSelection(null)}
                     >
                       Clear category
                     </Button>
