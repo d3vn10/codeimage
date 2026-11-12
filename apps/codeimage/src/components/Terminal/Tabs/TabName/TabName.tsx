@@ -1,11 +1,6 @@
-import type {LanguageIconDefinition} from '@codeimage/config';
-import {SUPPORTED_LANGUAGES} from '@codeimage/config';
-import {highlight as _highlight} from '@core/directives/highlight';
-import {Combobox} from '@kobalte/core';
 import {createResizeObserver} from '@solid-primitives/resize-observer';
 import type {JSXElement} from 'solid-js';
-import {createEffect, createMemo, createSignal} from 'solid-js';
-import {TabIcon} from '../TabIcon/TabIcon';
+import {createEffect, createSignal} from 'solid-js';
 import * as styles from './TabName.css';
 
 interface TabNameProps {
@@ -14,94 +9,15 @@ interface TabNameProps {
   onValueChange?: (value: string) => void;
 }
 
-const highlight = _highlight;
-void highlight;
-
-const icons = SUPPORTED_LANGUAGES.flatMap(language => language.icons);
-
-const uniqueIcons = icons.filter(
-  (icon, index, self) =>
-    index === self.findIndex(i => i.extension === icon.extension),
-);
-
 export default function TabName(props: TabNameProps): JSXElement {
-  let hiddenTextEl!: HTMLInputElement;
-  let inputEl!: HTMLInputElement;
-  let portal!: HTMLDivElement;
+  let hiddenTextEl!: HTMLDivElement;
   const [width, setWidth] = createSignal(0);
-  const textWithDotExtension = /\.([0-9a-z.]?)+$/i;
   const gap = 8;
   const placeholder = 'Untitled';
 
-  const computedWidth = () => width() + gap;
-
   const inputStyle = () => ({
-    width: `${computedWidth()}px`,
+    width: `${Math.max(width(), 16) + gap}px`,
   });
-
-  const onChange = (value: string): void => {
-    if (props.onValueChange) {
-      props.onValueChange(value);
-    }
-  };
-
-  const onSelectItem = (item: LanguageIconDefinition | null) => {
-    if (!item) return;
-    const sanitizedExtension = item.extension.replace('.', '');
-    const value = getFormattedValue(sanitizedExtension);
-    onChange(value);
-
-    // Move cursor before the extension dot in order to continue writing when contains only extension
-    if (value.startsWith('.')) {
-      queueMicrotask(() => {
-        const cursorPosition = value.indexOf(item.extension);
-        inputEl.setSelectionRange(cursorPosition, cursorPosition);
-      });
-    }
-  };
-
-  const getExtensionByInputValue = (inputValue: string | undefined | null) => {
-    if (!inputValue) return '';
-    const extension = /\.[0-9a-z.]+$/i.exec(inputValue);
-    return (extension ? extension[0] : '').replace('.', '');
-  };
-
-  const extension = createMemo(() => getExtensionByInputValue(props.value));
-
-  const isMatched = (option: LanguageIconDefinition, inputValue: string) => {
-    if (!inputValue) return true;
-    const currentExtension = getExtensionByInputValue(inputValue);
-    if (!currentExtension && inputValue.endsWith('.')) {
-      return true;
-    }
-    if (!currentExtension) return false;
-    return option.extension.includes(currentExtension);
-  };
-
-  const getFormattedValue = (value: string) => {
-    const sanitizedValue = props.value || '';
-    const hasDot = textWithDotExtension.test(sanitizedValue);
-    if (!hasDot) {
-      return `${sanitizedValue}.${value}`;
-    }
-    return sanitizedValue.replace(textWithDotExtension, `.${value}`);
-  };
-
-  const selectedItem = createMemo(() => {
-    return uniqueIcons.find(uniqueIcon => extension() == uniqueIcon.extension);
-  });
-
-  const hiddenText = () => props.value || placeholder;
-
-  const adjustPopperPositionerStyle = () => {
-    setTimeout(() => {
-      const popperPositioner = portal.querySelector('[data-popper-positioner]');
-      if (popperPositioner) {
-        (popperPositioner as HTMLElement).style.transition =
-          `transform 150ms ease-in-out`;
-      }
-    }, 200);
-  };
 
   createEffect(() => {
     setWidth(hiddenTextEl.clientWidth);
@@ -112,59 +28,22 @@ export default function TabName(props: TabNameProps): JSXElement {
     );
   });
 
+  const hiddenText = () => props.value || placeholder;
+
   return (
-    <Combobox.Root
-      value={selectedItem()}
-      onChange={onSelectItem}
-      optionLabel={'name'}
-      optionTextValue={'name'}
-      optionValue={'extension'}
-      disallowEmptySelection={true}
-      placement={'bottom-start'}
-      gutter={-2}
-      shift={width() - 10}
-      onOpenChange={isOpen => {
-        if (isOpen) {
-          adjustPopperPositionerStyle();
-        }
-      }}
-      itemComponent={props => {
-        return (
-          <Combobox.Item
-            item={props.item}
-            class={styles.tabHintDropdownItemContent}
-          >
-            <Combobox.ItemLabel class={styles.tabHintDropdownItemLabel}>
-              <TabIcon delay={0} content={props.item.rawValue.content} />
-              <div use:highlight={extension()} class={styles.tabText}>
-                {props.item.rawValue.extension}
-              </div>
-            </Combobox.ItemLabel>
-          </Combobox.Item>
-        );
-      }}
-      placeholder={placeholder}
-      options={uniqueIcons}
-      triggerMode={'focus'}
-      defaultFilter={isMatched}
-    >
-      <Combobox.Control class={styles.control} aria-label="Tab name">
-        <Combobox.Input
-          ref={inputEl}
-          value={props.value}
-          class={styles.input}
-          style={inputStyle()}
-          onInput={el => onChange(el.currentTarget.value)}
-        />
-        <div ref={hiddenTextEl} class={styles.inlineHiddenItem}>
-          {hiddenText()}
-        </div>
-      </Combobox.Control>
-      <Combobox.Portal ref={portal}>
-        <Combobox.Content class={styles.tabHint}>
-          <Combobox.Listbox class={styles.listbox} />
-        </Combobox.Content>
-      </Combobox.Portal>
-    </Combobox.Root>
+    <div class={styles.control}>
+      <input
+        aria-label="Tab name"
+        value={props.value ?? ''}
+        placeholder={placeholder}
+        readOnly={props.readonly}
+        class={styles.input}
+        style={inputStyle()}
+        onInput={event => props.onValueChange?.(event.currentTarget.value)}
+      />
+      <div ref={hiddenTextEl} class={styles.inlineHiddenItem}>
+        {hiddenText()}
+      </div>
+    </div>
   );
 }
