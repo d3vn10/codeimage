@@ -10,6 +10,7 @@ function isProjectFile(value: unknown): value is ProjectEditorPersistedState {
     typeof project.$version === 'string' &&
     !!project.editor &&
     Array.isArray(project.editor.editors) &&
+    project.editor.editors.length > 0 &&
     !!project.frame &&
     !!project.terminal
   );
@@ -39,7 +40,7 @@ export function LocalProjectMenuItems() {
     const safeName = tabName.replace(/[<>:"/\\\\|?*]/g, '_');
     link.download = `${safeName}.codeimage`;
     link.click();
-    URL.revokeObjectURL(url);
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   async function openProject(file?: File) {
