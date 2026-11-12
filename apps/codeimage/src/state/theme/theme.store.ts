@@ -21,7 +21,7 @@ function $getThemeStore() {
     ),
   );
 
-  const [customThemeResources, setCustomThemeResources] = createSignal(
+  const customThemeResources = createMemo(() =>
     customThemeDefinitions().map(definition => ({
       id: definition.id,
       resource: createResource(loaded, () => Promise.resolve(buildCustomTheme(definition))),
@@ -61,11 +61,7 @@ function $getThemeStore() {
     const next = [...customThemeDefinitions().filter(item => item.id !== definition.id), definition];
     setCustomThemeDefinitions(next);
     writeCustomThemeDefinitions(next);
-    const resource = createResource(loaded, () => Promise.resolve(buildCustomTheme(definition)));
-    setCustomThemeResources(items => [
-      ...items.filter(item => item.id !== definition.id),
-      {id: definition.id, resource},
-    ]);
+
   };
 
   return {
