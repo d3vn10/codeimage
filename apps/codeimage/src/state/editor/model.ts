@@ -37,6 +37,8 @@ export interface EditorUIOptions {
   focused: boolean;
   themeId: string;
   enableLigatures: boolean;
+  fontSize: number;
+  lineHeight: number;
 }
 
 export interface PersistedEditorState {
