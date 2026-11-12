@@ -86,12 +86,44 @@ export const EditorStyleForm: ParentComponent = () => {
     const theme =
       themeArray().find(item => item()?.id === state.options.themeId)?.() ??
       themeArray()[0]?.();
-    if (!theme) return [];
-    const categories = [
-      ...getEditorThemeHighlightColors(theme.editorTheme),
-      ...(theme.properties.highlightColors ?? []),
-    ];
-    return categories;
+    const themeCategories = theme
+      ? [
+          ...getEditorThemeHighlightColors(theme.editorTheme),
+          ...(theme.properties.highlightColors ?? []),
+        ]
+      : [];
+    const categoryLabels = [
+      ['base', 'Text'],
+      ['keywords', 'Keyword'],
+      ['strings', 'String'],
+      ['numbers', 'Number'],
+      ['comments', 'Comment'],
+      ['function', 'Function'],
+      ['className', 'Class'],
+      ['typeName', 'Type'],
+      ['propertyName', 'Property'],
+      ['variableName', 'Variable'],
+      ['variableNameSpecial', 'Special variable'],
+      ['boolean', 'Boolean'],
+      ['tag', 'Tag'],
+      ['regexp', 'Regular expression'],
+      ['punctuation', 'Punctuation'],
+      ['delimiters', 'Delimiter'],
+      ['operators', 'Operator'],
+      ['attrName', 'Attribute name'],
+      ['attrValue', 'Attribute value'],
+      ['self', 'Self reference'],
+      ['annotation', 'Annotation'],
+      ['meta', 'Metadata'],
+      ['paren', 'Parenthesis'],
+      ['brackets', 'Bracket'],
+      ['atom', 'Atom'],
+    ] as const;
+    return categoryLabels.map(([id, label]) => ({
+      id,
+      label,
+      color: themeCategories.find(category => category.id === id)?.color ?? '',
+    }));
   });
 
   const manualHighlightCategoryOptions = createSelectOptions(
@@ -103,12 +135,8 @@ export const EditorStyleForm: ParentComponent = () => {
     {key: 'label', valueKey: 'value'},
   );
 
-  const activeManualCategory = createMemo(() => {
-    const categories = manualHighlightCategories();
-    return categories.some(category => category.id === selectedManualCategory())
-      ? selectedManualCategory()
-      : categories[0]?.id ?? '';
-  });
+  const activeManualCategory = createMemo(() => selectedManualCategory());
+  const isPlainText = createMemo(() => editor()?.languageId === 'plain-text');
 
   const languageFormatterOptions = createSelectOptions(
     () =>
@@ -170,6 +198,86 @@ export const EditorStyleForm: ParentComponent = () => {
               </TwoColumnPanelRow>
             </PanelRow>
 
+            <Show
+              when={manualHighlightCategories().length > 0}
+              fallback={
+                <PanelRow
+                  for={'manualSyntaxCategoryUnavailable'}
+                  label={'Manual syntax coloring'}
+                >
+                  <TwoColumnPanelRow>
+                    <span>Select Plain Text to enable manual syntax coloring.</span>
+                  </TwoColumnPanelRow>
+                </PanelRow>
+              }
+            >
+              <>
+                <PanelRow
+                  for={'manualSyntaxCategoryField'}
+                  label={'Syntax category'}
+                >
+                  <TwoColumnPanelRow>
+                    <SuspenseEditorItem
+                      fallback={<SkeletonLine width={'100%'} height={'26px'} />}
+                    >
+                      {/* @ts-expect-error Fix @codeui/kit types */}
+                      <Select
+                        {...manualHighlightCategoryOptions.props()}
+                        {...manualHighlightCategoryOptions.controlled(
+                          () => activeManualCategory(),
+                          category =>
+                            setSelectedManualCategory(category as string),
+                        )}
+                        options={manualHighlightCategoryOptions.options()}
+                        aria-label={'Syntax category'}
+                        id={'manualSyntaxCategoryField'}
+                        size={'xs'}
+                        disabled={!isPlainText()}
+                      />
+                    </SuspenseEditorItem>
+                  </TwoColumnPanelRow>
+                </PanelRow>
+
+                <PanelRow
+                  for={'manualSyntaxApplyButton'}
+                  label={'Selection'}
+                >
+                  <TwoColumnPanelRow>
+                    <Button
+                      id={'manualSyntaxApplyButton'}
+                      size={'xs'}
+                      theme={'secondary'}
+                      block
+                      disabled={!isPlainText() || !hasSelection()}
+                      onClick={() =>
+                        applySyntaxCategoryToSelection(activeManualCategory())
+                      }
+                    >
+                      Apply category
+                    </Button>
+                  </TwoColumnPanelRow>
+                </PanelRow>
+
+                <PanelRow
+                  for={'manualSyntaxClearButton'}
+                  label={'Override'}
+                >
+                  <TwoColumnPanelRow>
+                    <Button
+                      id={'manualSyntaxClearButton'}
+                      size={'xs'}
+                      theme={'secondary'}
+                      block
+                      disabled={!isPlainText() || !hasSelection()}
+                      onClick={() => applySyntaxCategoryToSelection(null)}
+                    >
+                      Clear category
+                    </Button>
+                  </TwoColumnPanelRow>
+                </PanelRow>
+              </>
+            </Show>
+
             <PanelRow for={'frameLanguageField'} label={t('frame.theme')}>
               <TwoColumnPanelRow>
                 <SuspenseEditorItem
@@ -196,87 +304,6 @@ export const EditorStyleForm: ParentComponent = () => {
                 </SuspenseEditorItem>
               </TwoColumnPanelRow>
             </PanelRow>
-
-            <Show
-              when={manualHighlightCategories().length > 0}
-              fallback={
-                <PanelRow
-                  for={'manualSyntaxCategoryUnavailable'}
-                  label={'Syntax category'}
-                >
-                  <TwoColumnPanelRow>
-                    <span>
-                      No syntax categories are available for this theme.
-                    </span>
-                  </TwoColumnPanelRow>
-                </PanelRow>
-              }
-            >
-              <>
-                <PanelRow
-                  for={'manualSyntaxCategoryField'}
-                  label={'Syntax category'}
-                >
-                  <TwoColumnPanelRow>
-                    <SuspenseEditorItem
-                      fallback={<SkeletonLine width={'100%'} height={'26px'} />}
-                    >
-                      {/* @ts-expect-error Fix @codeui/kit types */}
-                      <Select
-                        {...manualHighlightCategoryOptions.props()}
-                        {...manualHighlightCategoryOptions.controlled(
-                          () => activeManualCategory(),
-                          category =>
-                            setSelectedManualCategory(category as string),
-                        )}
-                        options={manualHighlightCategoryOptions.options()}
-                        aria-label={'Syntax category'}
-                        id={'manualSyntaxCategoryField'}
-                        size={'xs'}
-                      />
-                    </SuspenseEditorItem>
-                  </TwoColumnPanelRow>
-                </PanelRow>
-
-                <PanelRow
-                  for={'manualSyntaxApplyButton'}
-                  label={'Selection'}
-                >
-                  <TwoColumnPanelRow>
-                    <Button
-                      id={'manualSyntaxApplyButton'}
-                      size={'xs'}
-                      theme={'secondary'}
-                      block
-                      disabled={!hasSelection() || !activeManualCategory()}
-                      onClick={() =>
-                        applySyntaxCategoryToSelection(activeManualCategory())
-                      }
-                    >
-                      Apply category
-                    </Button>
-                  </TwoColumnPanelRow>
-                </PanelRow>
-
-                <PanelRow
-                  for={'manualSyntaxClearButton'}
-                  label={'Override'}
-                >
-                  <TwoColumnPanelRow>
-                    <Button
-                      id={'manualSyntaxClearButton'}
-                      size={'xs'}
-                      theme={'secondary'}
-                      block
-                      disabled={!hasSelection()}
-                      onClick={() => applySyntaxCategoryToSelection(null)}
-                    >
-                      Clear category
-                    </Button>
-                  </TwoColumnPanelRow>
-                </PanelRow>
-              </>
-            </Show>
 
             <Show
               when={formatter.availableFormatters().length > 0}
