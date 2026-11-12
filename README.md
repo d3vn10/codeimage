@@ -1,3 +1,38 @@
+# CodeImage Desktop & Custom Enhancements
+
+This fork expands the original CodeImage editor with a standalone Windows desktop application and additional customization features.
+
+### Desktop Application
+- Standalone Windows application built with Electron.
+- Portable executable and Windows installer support.
+- Custom desktop window with a simplified interface.
+- External links open in the system browser.
+
+### Project Management
+- Save and load projects using `.codeimage` files.
+- Preserve editor content, themes, formatting, and layout settings.
+- Manage projects locally without requiring an account.
+
+### Editor Customization
+- Added Monoid font support.
+- Adjustable font size and decimal line spacing.
+- Custom tab names and independently selectable tab icons.
+- Manual syntax coloring with selectable categories.
+- Syntax category dropdowns display their corresponding colors.
+
+### Themes
+- Create and save custom themes.
+- Customize background, foreground, and syntax colors.
+- Added Catppuccin Latte and Mocha presets.
+- Theme settings persist between sessions.
+
+### Interface & Build Improvements
+- Reworked toolbar with Save, Open, and Export controls.
+- Improved sidebar sizing, spacing, and scrolling.
+- Removed unnecessary sign-in controls from the desktop interface.
+- Added dedicated Windows desktop build configuration.
+- Updated Vite build configuration for desktop support.
+
 ![CodeImage logo](assets/banner.png?raw=true)
 
 > Create elegant code screenshots of your source code.
