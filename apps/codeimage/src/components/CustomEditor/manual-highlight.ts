@@ -3,22 +3,23 @@ import {Decoration, EditorView} from '@codemirror/view';
 import {normalizeColoredRanges} from '../../state/editor/coloredRanges';
 import type {ColoredTextRange} from '../../state/editor/model';
 
-export interface ManualHighlightColor {
+export interface ManualSyntaxCategory {
   id: string;
   color: string;
 }
 
-/** Adds non-destructive text-color decorations for the saved manual ranges. */
+/** Applies a theme's syntax color to manually categorized text ranges. */
 export function createManualHighlightExtension(
   ranges: readonly ColoredTextRange[],
-  colors: readonly ManualHighlightColor[],
+  categories: readonly ManualSyntaxCategory[],
   documentLength: number,
 ): Extension {
-  const colorById = new Map<string, string>();
-  colors.forEach(({id, color}) => colorById.set(id, color));
+  const colorByCategory = new Map<string, string>();
+  categories.forEach(({id, color}) => colorByCategory.set(id, color));
 
   const marks = normalizeColoredRanges(ranges).flatMap(range => {
-    const color = colorById.get(range.color);
+    // `range.color` stores a syntax category ID for persisted-state compatibility.
+    const color = colorByCategory.get(range.color);
     const from = Math.max(0, Math.min(range.from, documentLength));
     const to = Math.max(0, Math.min(range.to, documentLength));
     if (!color || to <= from) return [];
